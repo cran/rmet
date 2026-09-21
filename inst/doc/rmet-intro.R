@@ -11,15 +11,19 @@ knitr::opts_chunk$set(
 )
 
 ## ----install, eval = FALSE----------------------------------------------------
-# # install.packages("devtools")
-# devtools::install_github("rodrigosqrt3/rmet")
+# install.packages("rmet")
+# 
+# # Development version:
+# # install.packages("pak")
+# # pak::pak("rodrigosqrt3/rmet")
 
 ## ----library------------------------------------------------------------------
 library(rmet)
 
 ## ----stations, eval = FALSE---------------------------------------------------
-# stations <- inmet_stations(state = "RS")
-# head(stations[, c("code", "name", "latitude", "longitude", "elevation")])
+# stations <- inmet_stations(state = "RS", status = "Operante")
+# head(stations[, c("station_code", "station_name", "latitude",
+#                   "longitude", "elevation", "status")])
 
 ## ----download, eval = FALSE---------------------------------------------------
 # # Downloads the 2023 archive (~70 MB) to the default cache directory.

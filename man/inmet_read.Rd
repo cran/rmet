@@ -2,13 +2,13 @@
 % Please edit documentation in R/read.R
 \name{inmet_read}
 \alias{inmet_read}
-\title{Read INMET station data from downloaded ZIP files}
+\title{Read cached INMET historical data}
 \usage{
 inmet_read(
   years,
   stations = NULL,
   dest_dir = tools::R_user_dir("rmet", "cache"),
-  tz = "America/Sao_Paulo",
+  tz = "UTC",
   variables = NULL,
   start_date = NULL,
   end_date = NULL,
@@ -16,57 +16,34 @@ inmet_read(
 )
 }
 \arguments{
-\item{years}{Integer vector of years to read. Each year must have a
-corresponding ZIP file in \code{dest_dir} (downloaded with \code{\link[=inmet_download]{inmet_download()}}).}
+\item{years}{Integer vector of years.}
 
-\item{stations}{Character vector of station codes (e.g., \code{"A001"},
-\code{"A652"}). If \code{NULL} (default), all stations are returned.}
+\item{stations}{Optional station codes. Matching is case-insensitive.}
 
-\item{dest_dir}{Character. Directory containing the ZIP files. Defaults to
-the same cache directory used by \code{\link[=inmet_download]{inmet_download()}}.}
+\item{dest_dir}{Directory containing \verb{<year>.zip} archives.}
 
-\item{tz}{Character. Time zone for the \code{datetime} column. INMET data uses
-UTC-3 (Brasília standard time). Defaults to \code{"America/Sao_Paulo"}.}
+\item{tz}{Output time zone. Defaults to \code{"UTC"}, the time standard used in
+the source files. Any name in \code{\link[=OlsonNames]{OlsonNames()}} is accepted.}
 
-\item{variables}{Character vector of variable names to keep. If \code{NULL}
-(default), all variables are returned. See \strong{Variables} section below.}
+\item{variables}{Optional meteorological columns to retain.}
 
-\item{start_date}{Character. Optional start date in \code{"YYYY-MM-DD"} format.}
+\item{start_date, end_date}{Optional inclusive date limits in \code{YYYY-MM-DD}
+format, interpreted in \code{tz}.}
 
-\item{end_date}{Character. Optional end date in \code{"YYYY-MM-DD"} format.}
-
-\item{quiet}{Logical. Suppress progress messages. Defaults to \code{FALSE}.}
+\item{quiet}{Suppress progress messages.}
 }
 \value{
-A \code{data.frame} containing the parsed INMET data.
-Columns include station identifiers (\code{station_code}, \code{region},
-\code{state}, \code{latitude}, \code{longitude}, \code{elevation}),
-a \code{POSIXct} \code{datetime} column, and various meteorological
-measurements (temperature, precipitation, pressure, humidity, wind, and radiation).
-Returns an empty \code{data.frame} if no data is found.
+A data frame. Identifier and station metadata columns are always
+retained when data are available.
 }
 \description{
-Parses the CSV files inside INMET annual ZIP archives and returns a single
-tidy \code{data.frame} with consistent column names, correct data types, and a
-proper \code{POSIXct} timestamp column.
+Parses CSV files inside annual INMET archives into a consistent data frame.
 }
-\section{Variables}{
-
-You can pass a subset of the output column names to \code{variables} to limit
-what is returned, e.g.:
-\code{variables = c("temp_dry_c", "precip_mm", "humid_rel_pct")}.
-}
-
 \examples{
 \donttest{
-df <- inmet_read(
-  years = 2000,
-  stations = "A801",
-  dest_dir = tempdir()
-)
-head(df)
+df <- inmet_read(2023, stations = "A801", dest_dir = tempdir())
 }
 }
 \seealso{
-\code{\link[=inmet_download]{inmet_download()}}, \code{\link[=inmet_stations]{inmet_stations()}}
+\code{\link[=inmet_get]{inmet_get()}}, \code{\link[=inmet_download]{inmet_download()}}, \code{\link[=inmet_stations]{inmet_stations()}}
 }
