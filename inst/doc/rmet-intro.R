@@ -1,233 +1,76 @@
 ## ----setup, include = FALSE---------------------------------------------------
 knitr::opts_chunk$set(
-  collapse  = TRUE,
-  comment   = "#>",
+  collapse = TRUE,
+  comment = "#>",
   fig.width = 7,
   fig.height = 4,
   fig.align = "center",
-  dpi = 150,
-  warning = FALSE,
-  message = FALSE
+  dpi = 150
 )
 
 ## ----install, eval = FALSE----------------------------------------------------
 # install.packages("rmet")
-# 
-# # Development version:
-# # install.packages("pak")
-# # pak::pak("rodrigosqrt3/rmet")
 
 ## ----library------------------------------------------------------------------
 library(rmet)
 
-## ----stations, eval = FALSE---------------------------------------------------
-# stations <- inmet_stations(state = "RS", status = "Operante")
-# head(stations[, c("station_code", "station_name", "latitude",
-#                   "longitude", "elevation", "status")])
+## ----stations-----------------------------------------------------------------
+rs <- inmet_stations(state = "RS", status = "Operante", source = "bundled")
+head(rs[, c("station_code", "station_name", "latitude", "longitude", "start_date")])
 
-## ----download, eval = FALSE---------------------------------------------------
-# # Downloads the 2023 archive (~70 MB) to the default cache directory.
-# # Safe to re-run — skips files that are already complete.
-# inmet_download(2023)
+## ----nearest------------------------------------------------------------------
+inmet_nearest(latitude = -30.03, longitude = -51.23, n = 3, source = "bundled")[
+  , c("station_code", "station_name", "distance_km", "start_date")
+]
 
-## ----cache, eval = FALSE------------------------------------------------------
-# inmet_cache_status()
+## ----map, eval = requireNamespace("sf", quietly = TRUE), fig.cap = "Operating automatic stations in Rio Grande do Sul, by elevation."----
+plot(inmet_as_sf(rs)["elevation"], pch = 19, main = "")
 
-## ----read, eval = FALSE-------------------------------------------------------
-# df <- inmet_read(
-#   years      = 2023,
-#   stations   = "A801",
-#   start_date = "2023-01-01",
-#   end_date   = "2023-12-31"
+## ----get, eval = FALSE--------------------------------------------------------
+# poa <- inmet_get(
+#   years = 2023,
+#   stations = "A801",
+#   variables = c("temp_dry_c", "temp_max_prev_c", "temp_min_prev_c", "precip_mm")
 # )
 
-## ----load-data----------------------------------------------------------------
-df <- rmet_example
-str(df[, c("datetime", "station_code", "state",
-           "temp_dry_c", "precip_mm", "humid_rel_pct",
-           "wind_speed_ms", "pressure_station_hpa")])
+## ----example------------------------------------------------------------------
+dim(rmet_example)
+head(rmet_example[, c("datetime", "temp_dry_c", "temp_max_prev_c", "precip_mm")])
 
-## ----daily-agg----------------------------------------------------------------
-df$date <- as.Date(df$datetime)
+## ----qc-----------------------------------------------------------------------
+checked <- inmet_qc(rmet_example)
+head(inmet_completeness(checked, variables = c("temp_dry_c", "precip_mm")), 3)
 
-daily <- aggregate(
-  cbind(temp_dry_c, precip_mm, humid_rel_pct, wind_speed_ms) ~ date,
-  data = df,
-  FUN  = function(x) mean(x, na.rm = TRUE)
-)
+## ----daily--------------------------------------------------------------------
+daily <- inmet_daily(checked)
+head(daily[, c("date", "n_hours", "temp_max_c", "temp_min_c", "precip_mm")])
 
-daily$temp_max <- aggregate(temp_dry_c ~ date, df, max, na.rm = TRUE)$temp_dry_c
-daily$temp_min <- aggregate(temp_dry_c ~ date, df, min, na.rm = TRUE)$temp_dry_c
-daily$precip   <- aggregate(precip_mm  ~ date, df, sum, na.rm = TRUE)$precip_mm
-daily$month    <- as.integer(format(daily$date, "%m"))
-
-## ----plot-temp, fig.cap = "Daily temperature range at Porto Alegre (A801) — 2023."----
-col_max  <- "#E74C3C"
-col_min  <- "#3498DB"
-col_band <- "#F1948A"
-
-oldpar <- par(mar = c(4, 4.5, 3, 1), family = "sans", cex.lab = 0.95, cex.axis = 0.85)
-
-plot(
-  daily$date, daily$temp_max,
-  type = "n",
-  ylim = range(c(daily$temp_min, daily$temp_max), na.rm = TRUE),
-  xlab = "",
-  ylab = "Temperature (\u00b0C)",
-  main = "Daily Temperature Range \u2014 Porto Alegre (A801), 2023",
-  axes = FALSE
-)
-
-polygon(
-  c(daily$date, rev(daily$date)),
-  c(daily$temp_max, rev(daily$temp_min)),
-  col    = adjustcolor(col_band, alpha.f = 0.35),
-  border = NA
-)
-
-lines(daily$date, daily$temp_max, col = col_max, lwd = 1.2)
-lines(daily$date, daily$temp_min, col = col_min, lwd = 1.2)
-
-axis(1,
-     at     = seq(min(daily$date), max(daily$date), by = "2 months"),
-     labels = format(seq(min(daily$date), max(daily$date), by = "2 months"), "%b"),
-     las    = 1)
-axis(2, las = 1)
-box(col = "grey80")
-
-legend(
-  "topright",
-  legend = c("Daily max", "Daily min"),
-  col    = c(col_max, col_min),
-  lwd    = 2,
-  bty    = "n",
-  cex    = 0.85
-)
-
+## ----plot-temp, fig.cap = "Daily maximum and minimum temperature at Porto Alegre (A801), 2023."----
+daily <- daily[format(daily$date, "%Y") == "2023", ]
+oldpar <- par(mar = c(4, 4.5, 2, 1))
+plot(daily$date, daily$temp_max_c, type = "l", col = "#C0392B",
+     ylim = range(daily$temp_min_c, daily$temp_max_c, na.rm = TRUE),
+     xlab = "", ylab = "Temperature (°C)")
+lines(daily$date, daily$temp_min_c, col = "#2471A3")
+legend("topright", c("Maximum", "Minimum"), col = c("#C0392B", "#2471A3"),
+       lwd = 1, bty = "n")
 par(oldpar)
 
-## ----plot-precip, fig.cap = "Daily accumulated precipitation at Porto Alegre (A801) — 2023."----
-col_prec <- "#3498DB"
-
-oldpar <- par(mar = c(4, 4.5, 3, 1), family = "sans", cex.lab = 0.95, cex.axis = 0.85)
-
-barplot(
-  daily$precip,
-  col    = adjustcolor(col_prec, alpha.f = 0.75),
-  border = NA,
-  space  = 0,
-  xlab   = "",
-  ylab   = "Precipitation (mm)",
-  main   = "Daily Precipitation \u2014 Porto Alegre (A801), 2023",
-  axes   = FALSE
-)
-
-axis(2, las = 1)
-
-# Month labels on x axis
-month_starts <- which(!duplicated(format(daily$date, "%m")))
-axis(1,
-     at     = month_starts,
-     labels = format(daily$date[month_starts], "%b"),
-     tick   = FALSE)
-
-box(col = "grey80")
-
+## ----plot-precip, fig.cap = "Monthly precipitation at Porto Alegre (A801), 2023."----
+monthly <- tapply(daily$precip_mm, format(daily$date, "%m"), sum, na.rm = TRUE)
+oldpar <- par(mar = c(4, 4.5, 2, 1))
+barplot(monthly, names.arg = month.abb, col = "#5DADE2", border = NA,
+        ylab = "Precipitation (mm)")
 par(oldpar)
 
-## ----plot-seasonal, fig.cap = "Seasonal cycle of hourly dry-bulb temperature at Porto Alegre (A801) — 2023."----
-col_box <- "#E74C3C"
-
-df$month <- as.integer(format(df$datetime, "%m"))
-month_labels <- c("Jan","Feb","Mar","Apr","May","Jun",
-                  "Jul","Aug","Sep","Oct","Nov","Dec")
-
-oldpar <- par(mar = c(4, 4.5, 3, 1), family = "sans", cex.lab = 0.95, cex.axis = 0.85)
-
-boxplot(
-  temp_dry_c ~ month,
-  data     = df,
-  col      = adjustcolor(col_box, alpha.f = 0.40),
-  border   = col_box,
-  names    = month_labels,
-  xlab     = "Month",
-  ylab     = "Dry-bulb temperature (\u00b0C)",
-  main     = "Temperature Seasonality \u2014 Porto Alegre (A801), 2023",
-  outline  = FALSE,
-  whisklty = 1,
-  medlwd   = 2,
-  axes     = FALSE
-)
-
-axis(1, at = 1:12, labels = month_labels, las = 1)
-axis(2, las = 1)
-box(col = "grey80")
-
-par(oldpar)
-
-## ----plot-wind, fig.cap = "Distribution of hourly wind speed at Porto Alegre (A801) — 2023."----
-col_wind <- "#2C3E50"
-
-ws <- df$wind_speed_ms[!is.na(df$wind_speed_ms) & df$wind_speed_ms >= 0]
-
-oldpar <- par(mar = c(4, 4.5, 3, 1), family = "sans", cex.lab = 0.95, cex.axis = 0.85)
-
-h <- hist(ws, breaks = 30, plot = FALSE)
-
-plot(h,
-     col    = adjustcolor(col_wind, alpha.f = 0.55),
-     border = "white",
-     xlab   = "Wind speed (m/s)",
-     ylab   = "Frequency",
-     main   = "Wind Speed Distribution \u2014 Porto Alegre (A801), 2023",
-     axes   = FALSE)
-
-abline(v   = mean(ws),
-       col = "#E74C3C",
-       lwd = 2,
-       lty = 2)
-
-axis(1, las = 1)
-axis(2, las = 1)
-box(col = "grey80")
-
-legend("topright",
-       legend = paste0("Mean: ", round(mean(ws), 1), " m/s"),
-       col    = "#E74C3C",
-       lwd    = 2,
-       lty    = 2,
-       bty    = "n",
-       cex    = 0.85)
-
-par(oldpar)
-
-## ----filter, eval = FALSE-----------------------------------------------------
-# # Only summer months (December–February), temperature and humidity
-# summer <- inmet_read(
-#   years      = 2023,
-#   stations   = "A801",
-#   start_date = "2023-12-01",
-#   end_date   = "2023-12-31",
-#   variables  = c("temp_dry_c", "humid_rel_pct")
-# )
-# 
-# # Multiple stations across Rio Grande do Sul
-# rs_stations <- inmet_read(
-#   years    = 2023,
-#   stations = c("A801", "A802", "A827"),
+## ----steps, eval = FALSE------------------------------------------------------
+# inmet_download(2020:2023)        # download (or update) archives
+# inmet_cache_status()             # what is cached, and how large
+# weather <- inmet_read(
+#   years = 2020:2023,
+#   stations = c("A801", "A832"),
+#   start_date = "2020-06-01",
+#   end_date = "2023-08-31",
 #   variables = c("temp_dry_c", "precip_mm")
 # )
-
-## ----extract, eval = FALSE----------------------------------------------------
-# inmet_extract(
-#   years   = 2023,
-#   out_dir = file.path(tempdir(), "inmet_csv")
-# )
-
-## ----cache-mgmt, eval = FALSE-------------------------------------------------
-# # See what is cached and how large each file is
-# inmet_cache_status()
-# 
-# # Remove all cached archives to free disk space
-# inmet_cache_clear()
 

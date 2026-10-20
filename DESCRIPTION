@@ -1,19 +1,22 @@
 Package: rmet
 Type: Package
 Title: Download and Read Brazilian Meteorological Data from INMET
-Version: 0.2.0
+Version: 0.3.0
 Authors@R: person("Rodrigo Fonseca", "Villa",
                   email = "rodrigo03.villa@gmail.com",
                   role = c("aut", "cre"),
                   comment = c(ORCID = "0009-0005-2938-2270"))
-Description: Automates the download and processing of historical weather
-    data from the Brazilian National Institute of Meteorology (INMET).
-    It provides a cached catalogue of automatic stations, resumable and
-    validated downloads, and parsers for formatting inconsistencies in raw
-    CSV files across different years. It removes structural artifacts,
-    standardizes column names, parses timestamps, and returns data frames ready
-    for analysis. Data are retrieved from
-    <https://portal.inmet.gov.br/dadoshistoricos> and
+Description: Automates the download and processing of historical hourly
+    weather data from automatic stations of the Brazilian National Institute
+    of Meteorology (INMET). It provides the official station catalogue with
+    an offline snapshot and nearest-station search, validated and resumable
+    downloads that detect updated archives, and a fast parser for the
+    formatting and encoding inconsistencies of raw CSV files across years. It
+    returns analysis-ready data frames with standardized column names and UTC
+    timestamps. It flags implausible values with transparent quality-control
+    checks, reports data completeness, and builds daily summaries in each
+    station's local time with explicit rules for incomplete days. Data are
+    retrieved from <https://portal.inmet.gov.br/dadoshistoricos> and
     <https://apitempo.inmet.gov.br/estacoes/T>.
 Depends: R (>= 4.0.0)
 Encoding: UTF-8
@@ -23,14 +26,14 @@ License: GPL (>= 3)
 URL: https://github.com/rodrigosqrt3/rmet
 BugReports: https://github.com/rodrigosqrt3/rmet/issues
 RoxygenNote: 7.3.3
-Imports: curl, jsonlite
-Suggests: spelling, testthat (>= 3.0.0), knitr, rmarkdown
+Imports: curl (>= 4.0), jsonlite
+Suggests: spelling, testthat (>= 3.0.0), knitr, rmarkdown, sf
 VignetteBuilder: knitr
 Config/testthat/edition: 3
 NeedsCompilation: no
-Packaged: 2026-09-19 19:02:39 UTC; rodri
+Packaged: 2026-10-19 19:55:25 UTC; rodri
 Author: Rodrigo Fonseca Villa [aut, cre] (ORCID:
     <https://orcid.org/0009-0005-2938-2270>)
 Maintainer: Rodrigo Fonseca Villa <rodrigo03.villa@gmail.com>
 Repository: CRAN
-Date/Publication: 2026-09-21 10:20:03 UTC
+Date/Publication: 2026-10-20 13:30:02 UTC

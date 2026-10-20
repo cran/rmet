@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+
+
+<title>Time Zones, Missing Hours and Daily Data</title>
+
+<script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
+// be compatible with the behavior of Pandoc < 2.8).
+document.addEventListener('DOMContentLoaded', function(e) {
+  var hs = document.querySelectorAll("div.section[class*='level'] > :first-child");
+  var i, h, a;
+  for (i = 0; i < hs.length; i++) {
+    h = hs[i];
+    if (!/^h[1-6]$/i.test(h.tagName)) continue;  // it should be a header h1-h6
+    a = h.attributes;
+    while (a.length > 0) h.removeAttribute(a[0].name);
+  }
+});
+</script>
+
+<style type="text/css">
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+span.underline{text-decoration: underline;}
+div.column{display: inline-block; vertical-align: top; width: 50%;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+</style>
+
+
+
+<style type="text/css">
+code {
+white-space: pre;
+}
+.sourceCode {
+overflow: visible;
+}
+</style>
+<style type="text/css" data-origin="pandoc">
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #aaaaaa;
+}
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa; padding-left: 4px; }
+div.sourceCode
+{ }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } 
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.at { color: #7d9029; } 
+code span.bn { color: #40a070; } 
+code span.bu { color: #008000; } 
+code span.cf { color: #007020; font-weight: bold; } 
+code span.ch { color: #4070a0; } 
+code span.cn { color: #880000; } 
+code span.co { color: #60a0b0; font-style: italic; } 
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.do { color: #ba2121; font-style: italic; } 
+code span.dt { color: #902000; } 
+code span.dv { color: #40a070; } 
+code span.er { color: #ff0000; font-weight: bold; } 
+code span.ex { } 
+code span.fl { color: #40a070; } 
+code span.fu { color: #06287e; } 
+code span.im { color: #008000; font-weight: bold; } 
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.kw { color: #007020; font-weight: bold; } 
+code span.op { color: #666666; } 
+code span.ot { color: #007020; } 
+code span.pp { color: #bc7a00; } 
+code span.sc { color: #4070a0; } 
+code span.ss { color: #bb6688; } 
+code span.st { color: #4070a0; } 
+code span.va { color: #19177c; } 
+code span.vs { color: #4070a0; } 
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } 
+</style>
+<script>
+// apply pandoc div.sourceCode style to pre.sourceCode instead
+(function() {
+  var sheets = document.styleSheets;
+  for (var i = 0; i < sheets.length; i++) {
+    if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
+    try { var rules = sheets[i].cssRules; } catch (e) { continue; }
+    var j = 0;
+    while (j < rules.length) {
+      var rule = rules[j];
+      // check if there is a div.sourceCode rule
+      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") {
+        j++;
+        continue;
+      }
+      var style = rule.style.cssText;
+      // check if color or background-color is set
+      if (rule.style.color === '' && rule.style.backgroundColor === '') {
+        j++;
+        continue;
+      }
+      // replace div.sourceCode by a pre.sourceCode rule
+      sheets[i].deleteRule(j);
+      sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
+    }
+  }
+})();
+</script>
+
+
+
+
+<style type="text/css">body {
+background-color: #fff;
+margin: 1em auto;
+max-width: 700px;
+overflow: visible;
+padding-left: 2em;
+padding-right: 2em;
+font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+font-size: 14px;
+line-height: 1.35;
+}
+#TOC {
+clear: both;
+margin: 0 0 10px 10px;
+padding: 4px;
+width: 400px;
+border: 1px solid #CCCCCC;
+border-radius: 5px;
+background-color: #f6f6f6;
+font-size: 13px;
+line-height: 1.3;
+}
+#TOC .toctitle {
+font-weight: bold;
+font-size: 15px;
+margin-left: 5px;
+}
+#TOC ul {
+padding-left: 40px;
+margin-left: -1.5em;
+margin-top: 5px;
+margin-bottom: 5px;
+}
+#TOC ul ul {
+margin-left: -2em;
+}
+#TOC li {
+line-height: 16px;
+}
+table {
+margin: 1em auto;
+border-width: 1px;
+border-color: #DDDDDD;
+border-style: outset;
+border-collapse: collapse;
+}
+table th {
+border-width: 2px;
+padding: 5px;
+border-style: inset;
+}
+table td {
+border-width: 1px;
+border-style: inset;
+line-height: 18px;
+padding: 5px 5px;
+}
+table, table th, table td {
+border-left-style: none;
+border-right-style: none;
+}
+table thead, table tr.even {
+background-color: #f7f7f7;
+}
+p {
+margin: 0.5em 0;
+}
+blockquote {
+background-color: #f6f6f6;
+padding: 0.25em 0.75em;
+}
+hr {
+border-style: solid;
+border: none;
+border-top: 1px solid #777;
+margin: 28px 0;
+}
+dl {
+margin-left: 0;
+}
+dl dd {
+margin-bottom: 13px;
+margin-left: 13px;
+}
+dl dt {
+font-weight: bold;
+}
+ul {
+margin-top: 0;
+}
+ul li {
+list-style: circle outside;
+}
+ul ul {
+margin-bottom: 0;
+}
+pre, code {
+background-color: #f7f7f7;
+border-radius: 3px;
+color: #333;
+white-space: pre-wrap; 
+}
+pre {
+border-radius: 3px;
+margin: 5px 0px 10px 0px;
+padding: 10px;
+}
+pre:not([class]) {
+background-color: #f7f7f7;
+}
+code {
+font-family: Consolas, Monaco, 'Courier New', monospace;
+font-size: 85%;
+}
+p > code, li > code {
+padding: 2px 0px;
+}
+div.figure {
+text-align: center;
+}
+img {
+background-color: #FFFFFF;
+padding: 2px;
+border: 1px solid #DDDDDD;
+border-radius: 3px;
+border: 1px solid #CCCCCC;
+margin: 0 5px;
+}
+h1 {
+margin-top: 0;
+font-size: 35px;
+line-height: 40px;
+}
+h2 {
+border-bottom: 4px solid #f7f7f7;
+padding-top: 10px;
+padding-bottom: 2px;
+font-size: 145%;
+}
+h3 {
+border-bottom: 2px solid #f7f7f7;
+padding-top: 10px;
+font-size: 120%;
+}
+h4 {
+border-bottom: 1px solid #f7f7f7;
+margin-left: 8px;
+font-size: 105%;
+}
+h5, h6 {
+border-bottom: 1px solid #ccc;
+font-size: 105%;
+}
+a {
+color: #0033dd;
+text-decoration: none;
+}
+a:hover {
+color: #6666ff; }
+a:visited {
+color: #800080; }
+a:visited:hover {
+color: #BB00BB; }
+a[href^="http:"] {
+text-decoration: underline; }
+a[href^="https:"] {
+text-decoration: underline; }
+
+code > span.kw { color: #555; font-weight: bold; } 
+code > span.dt { color: #902000; } 
+code > span.dv { color: #40a070; } 
+code > span.bn { color: #d14; } 
+code > span.fl { color: #d14; } 
+code > span.ch { color: #d14; } 
+code > span.st { color: #d14; } 
+code > span.co { color: #888888; font-style: italic; } 
+code > span.ot { color: #007020; } 
+code > span.al { color: #ff0000; font-weight: bold; } 
+code > span.fu { color: #900; font-weight: bold; } 
+code > span.er { color: #a61717; background-color: #e3d2d2; } 
+</style>
+
+
+
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">Time Zones, Missing Hours and Daily
+Data</h1>
+
+
+
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="fu">library</span>(rmet)</span>
+<span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a>x <span class="ot">&lt;-</span> rmet_example</span></code></pre></div>
+<p>Hourly INMET data look simple, but three conventions decide whether
+daily values computed from them are right: how the hours are stamped,
+which day an hour belongs to, and what to do with missing hours. This
+vignette explains each one and how <code>inmet_daily()</code> handles
+it.</p>
+<div id="timestamps-are-utc-and-mark-the-end-of-the-hour" class="section level2">
+<h2>1. Timestamps are UTC and mark the end of the hour</h2>
+<p>The historical files record time in UTC. <code>inmet_read()</code>
+keeps it that way by default, so <code>datetime</code> is unambiguous
+for every station in the country:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a>x<span class="sc">$</span>datetime[<span class="dv">1</span><span class="sc">:</span><span class="dv">3</span>]</span>
+<span id="cb2-2"><a href="#cb2-2" tabindex="-1"></a><span class="co">#&gt; [1] &quot;2023-01-01 00:00:00 UTC&quot; &quot;2023-01-01 01:00:00 UTC&quot;</span></span>
+<span id="cb2-3"><a href="#cb2-3" tabindex="-1"></a><span class="co">#&gt; [3] &quot;2023-01-01 02:00:00 UTC&quot;</span></span>
+<span id="cb2-4"><a href="#cb2-4" tabindex="-1"></a><span class="fu">attr</span>(x<span class="sc">$</span>datetime, <span class="st">&quot;tzone&quot;</span>)</span>
+<span id="cb2-5"><a href="#cb2-5" tabindex="-1"></a><span class="co">#&gt; [1] &quot;UTC&quot;</span></span></code></pre></div>
+<p>Many columns describe the hour that <em>ends</em> at the timestamp:
+precipitation is the total of the previous hour, and
+<code>temp_max_prev_c</code> and <code>temp_min_prev_c</code> are the
+highest and lowest air temperature during that hour. The record stamped
+<code>03:00 UTC</code> therefore covers 02:00 to 03:00 UTC, which is
+23:00 to midnight in Porto Alegre.</p>
+<p>Displaying the same instants in local time only changes how they
+print:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a>local <span class="ot">&lt;-</span> x<span class="sc">$</span>datetime[<span class="dv">1</span><span class="sc">:</span><span class="dv">3</span>]</span>
+<span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a><span class="fu">attr</span>(local, <span class="st">&quot;tzone&quot;</span>) <span class="ot">&lt;-</span> <span class="st">&quot;America/Sao_Paulo&quot;</span></span>
+<span id="cb3-3"><a href="#cb3-3" tabindex="-1"></a>local</span>
+<span id="cb3-4"><a href="#cb3-4" tabindex="-1"></a><span class="co">#&gt; [1] &quot;2022-12-31 21:00:00 -03&quot; &quot;2022-12-31 22:00:00 -03&quot;</span></span>
+<span id="cb3-5"><a href="#cb3-5" tabindex="-1"></a><span class="co">#&gt; [3] &quot;2022-12-31 23:00:00 -03&quot;</span></span></code></pre></div>
+</div>
+<div id="which-day-does-an-hour-belong-to" class="section level2">
+<h2>2. Which day does an hour belong to?</h2>
+<p>A daily maximum in Brazil should be the maximum of a <em>local</em>
+day. Grouping by <code>as.Date(datetime)</code> uses UTC days instead,
+which in Porto Alegre run from 21:00 to 21:00 local time (22:00 to 22:00
+during daylight saving time, which Brazil observed until 2019). An
+evening shower or a hot late afternoon can then land on the wrong
+day.</p>
+<p><code>inmet_daily()</code> assigns each record to the local day
+containing the middle of its hour (<code>datetime</code> minus 30
+minutes). The two choices give different days:</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a>utc_day <span class="ot">&lt;-</span> <span class="fu">as.Date</span>(x<span class="sc">$</span>datetime)</span>
+<span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a>local_day <span class="ot">&lt;-</span> <span class="fu">as.Date</span>(x<span class="sc">$</span>datetime <span class="sc">-</span> <span class="dv">1800</span>, <span class="at">tz =</span> <span class="st">&quot;America/Sao_Paulo&quot;</span>)</span>
+<span id="cb4-3"><a href="#cb4-3" tabindex="-1"></a><span class="fu">mean</span>(utc_day <span class="sc">!=</span> local_day)</span>
+<span id="cb4-4"><a href="#cb4-4" tabindex="-1"></a><span class="co">#&gt; [1] 0.1624149</span></span></code></pre></div>
+<p>One hour in six (the records stamped 00:00 to 03:00 UTC) is placed on
+a different day, and the differences matter for daily totals and
+extremes:</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a>wrong <span class="ot">&lt;-</span> <span class="fu">tapply</span>(x<span class="sc">$</span>precip_mm, utc_day, sum)</span>
+<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a>right <span class="ot">&lt;-</span> <span class="fu">inmet_daily</span>(x, <span class="at">min_hours =</span> <span class="dv">1</span>)</span>
+<span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a>right <span class="ot">&lt;-</span> <span class="fu">setNames</span>(right<span class="sc">$</span>precip_mm, right<span class="sc">$</span>date)</span>
+<span id="cb5-4"><a href="#cb5-4" tabindex="-1"></a>common <span class="ot">&lt;-</span> <span class="fu">intersect</span>(<span class="fu">names</span>(wrong), <span class="fu">names</span>(right))</span>
+<span id="cb5-5"><a href="#cb5-5" tabindex="-1"></a><span class="fu">summary</span>(<span class="fu">abs</span>(wrong[common] <span class="sc">-</span> right[common]))</span>
+<span id="cb5-6"><a href="#cb5-6" tabindex="-1"></a><span class="co">#&gt;    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. </span></span>
+<span id="cb5-7"><a href="#cb5-7" tabindex="-1"></a><span class="co">#&gt;   0.000   0.000   0.000   1.315   0.200  33.200</span></span></code></pre></div>
+<p>Brazil spans four time zones, and some states observed daylight
+saving time in some years and others not. By default
+(<code>tz = &quot;auto&quot;</code>), <code>inmet_daily()</code> uses each
+station’s own zone, derived from its state and longitude by
+<code>inmet_timezone()</code>, and reports it in the
+<code>time_zone</code> column:</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a><span class="fu">inmet_timezone</span>(<span class="fu">c</span>(<span class="st">&quot;RS&quot;</span>, <span class="st">&quot;MT&quot;</span>, <span class="st">&quot;AC&quot;</span>, <span class="st">&quot;AM&quot;</span>), <span class="fu">c</span>(<span class="sc">-</span><span class="fl">51.2</span>, <span class="sc">-</span><span class="fl">56.1</span>, <span class="sc">-</span><span class="fl">67.8</span>, <span class="sc">-</span><span class="fl">69.9</span>))</span>
+<span id="cb6-2"><a href="#cb6-2" tabindex="-1"></a><span class="co">#&gt; [1] &quot;America/Sao_Paulo&quot;  &quot;America/Cuiaba&quot;     &quot;America/Rio_Branco&quot;</span></span>
+<span id="cb6-3"><a href="#cb6-3" tabindex="-1"></a><span class="co">#&gt; [4] &quot;America/Eirunepe&quot;</span></span></code></pre></div>
+<p>Pass a fixed zone, such as <code>tz = &quot;America/Sao_Paulo&quot;</code>, to
+put all stations on the same clock, or <code>tz = &quot;UTC&quot;</code> for UTC
+days.</p>
+</div>
+<div id="missing-hours" class="section level2">
+<h2>3. Missing hours</h2>
+<p>INMET files contain rows for every hour of the year, including hours
+when a station was not reporting. By default <code>inmet_read()</code>
+drops rows in which <em>every</em> measurement is missing
+(<code>drop_empty = FALSE</code> keeps them). Individual variables can
+still be missing in the rows that remain.</p>
+<p>A daily total over a day with half its hours missing is not a daily
+total. <code>inmet_daily()</code> therefore computes a variable only
+when it has at least <code>min_hours</code> valid hourly values that day
+(20 by default), and reports the number of hourly records in
+<code>n_hours</code>:</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a>daily <span class="ot">&lt;-</span> <span class="fu">inmet_daily</span>(x)</span>
+<span id="cb7-2"><a href="#cb7-2" tabindex="-1"></a><span class="fu">table</span>(<span class="fu">cut</span>(daily<span class="sc">$</span>n_hours, <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">12</span>, <span class="dv">19</span>, <span class="dv">23</span>, <span class="dv">25</span>), <span class="at">right =</span> <span class="cn">TRUE</span>))</span>
+<span id="cb7-3"><a href="#cb7-3" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb7-4"><a href="#cb7-4" tabindex="-1"></a><span class="co">#&gt;  (0,12] (12,19] (19,23] (23,25] </span></span>
+<span id="cb7-5"><a href="#cb7-5" tabindex="-1"></a><span class="co">#&gt;       2       2      46     316</span></span>
+<span id="cb7-6"><a href="#cb7-6" tabindex="-1"></a>daily[daily<span class="sc">$</span>n_hours <span class="sc">&lt;</span> <span class="dv">20</span>, <span class="fu">c</span>(<span class="st">&quot;date&quot;</span>, <span class="st">&quot;n_hours&quot;</span>, <span class="st">&quot;temp_max_c&quot;</span>, <span class="st">&quot;precip_mm&quot;</span>)]</span>
+<span id="cb7-7"><a href="#cb7-7" tabindex="-1"></a><span class="co">#&gt;           date n_hours temp_max_c precip_mm</span></span>
+<span id="cb7-8"><a href="#cb7-8" tabindex="-1"></a><span class="co">#&gt; 1   2022-12-31       4         NA        NA</span></span>
+<span id="cb7-9"><a href="#cb7-9" tabindex="-1"></a><span class="co">#&gt; 124 2023-05-03      17         NA        NA</span></span>
+<span id="cb7-10"><a href="#cb7-10" tabindex="-1"></a><span class="co">#&gt; 148 2023-05-27       1         NA        NA</span></span>
+<span id="cb7-11"><a href="#cb7-11" tabindex="-1"></a><span class="co">#&gt; 149 2023-05-28      13         NA        NA</span></span></code></pre></div>
+<p>To see completeness before computing anything,
+<code>inmet_completeness()</code> gives the percentage of valid hours
+per station and month (or year):</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a><span class="fu">head</span>(<span class="fu">inmet_completeness</span>(x, <span class="at">variables =</span> <span class="fu">c</span>(<span class="st">&quot;temp_dry_c&quot;</span>, <span class="st">&quot;precip_mm&quot;</span>, <span class="st">&quot;wind_speed_ms&quot;</span>)))</span>
+<span id="cb8-2"><a href="#cb8-2" tabindex="-1"></a><span class="co">#&gt;   station_code  period hours_expected hours_present temp_dry_c precip_mm</span></span>
+<span id="cb8-3"><a href="#cb8-3" tabindex="-1"></a><span class="co">#&gt; 1         A801 2023-01            744           734       98.7      98.7</span></span>
+<span id="cb8-4"><a href="#cb8-4" tabindex="-1"></a><span class="co">#&gt; 2         A801 2023-02            672           666       99.1      99.1</span></span>
+<span id="cb8-5"><a href="#cb8-5" tabindex="-1"></a><span class="co">#&gt; 3         A801 2023-03            744           734       98.7      98.7</span></span>
+<span id="cb8-6"><a href="#cb8-6" tabindex="-1"></a><span class="co">#&gt; 4         A801 2023-04            720           720      100.0     100.0</span></span>
+<span id="cb8-7"><a href="#cb8-7" tabindex="-1"></a><span class="co">#&gt; 5         A801 2023-05            744           702       94.4      94.4</span></span>
+<span id="cb8-8"><a href="#cb8-8" tabindex="-1"></a><span class="co">#&gt; 6         A801 2023-06            720           720      100.0     100.0</span></span>
+<span id="cb8-9"><a href="#cb8-9" tabindex="-1"></a><span class="co">#&gt;   wind_speed_ms</span></span>
+<span id="cb8-10"><a href="#cb8-10" tabindex="-1"></a><span class="co">#&gt; 1          98.5</span></span>
+<span id="cb8-11"><a href="#cb8-11" tabindex="-1"></a><span class="co">#&gt; 2          99.1</span></span>
+<span id="cb8-12"><a href="#cb8-12" tabindex="-1"></a><span class="co">#&gt; 3          98.7</span></span>
+<span id="cb8-13"><a href="#cb8-13" tabindex="-1"></a><span class="co">#&gt; 4         100.0</span></span>
+<span id="cb8-14"><a href="#cb8-14" tabindex="-1"></a><span class="co">#&gt; 5          93.7</span></span>
+<span id="cb8-15"><a href="#cb8-15" tabindex="-1"></a><span class="co">#&gt; 6          99.7</span></span></code></pre></div>
+<p>Choose <code>min_hours</code> to suit the variable and the analysis:
+precipitation totals are sensitive to every missing hour, while a daily
+maximum of temperature is usually reached in the afternoon. Radiation is
+an exception: it is missing at night at most stations, so
+<code>radiation_mj_m2</code> sums whatever daytime values are present
+(see <code>?inmet_daily</code>).</p>
+</div>
+<div id="which-temperature-columns" class="section level2">
+<h2>4. Which temperature columns?</h2>
+<p>The hourly files contain both the air temperature at the top of the
+hour (<code>temp_dry_c</code>) and its extremes during the previous hour
+(<code>temp_max_prev_c</code>, <code>temp_min_prev_c</code>). The daily
+maximum and minimum should come from the extremes; the instantaneous
+values miss the peaks between readings:</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a>from_extremes <span class="ot">&lt;-</span> <span class="fu">inmet_daily</span>(x)<span class="sc">$</span>temp_max_c</span>
+<span id="cb9-2"><a href="#cb9-2" tabindex="-1"></a>from_hourly <span class="ot">&lt;-</span> <span class="fu">inmet_daily</span>(x[, <span class="fu">setdiff</span>(<span class="fu">names</span>(x), <span class="st">&quot;temp_max_prev_c&quot;</span>)])<span class="sc">$</span>temp_max_c</span>
+<span id="cb9-3"><a href="#cb9-3" tabindex="-1"></a><span class="fu">summary</span>(from_extremes <span class="sc">-</span> from_hourly)</span>
+<span id="cb9-4"><a href="#cb9-4" tabindex="-1"></a><span class="co">#&gt;    Min. 1st Qu.  Median    Mean 3rd Qu.    Max.    NA&#39;s </span></span>
+<span id="cb9-5"><a href="#cb9-5" tabindex="-1"></a><span class="co">#&gt;  0.0000  0.3000  0.5000  0.5707  0.8000  2.3000       4</span></span></code></pre></div>
+<p>At Porto Alegre in 2023 the hourly readings underestimate the daily
+maximum by about half a degree on average, and by more than two degrees
+on some days.</p>
+<p><code>inmet_daily()</code> uses the extremes when they are present
+and falls back to <code>temp_dry_c</code> otherwise.</p>
+</div>
+<div id="quality-control" class="section level2">
+<h2>5. Quality control</h2>
+<p>INMET labels automatic-station observations as raw data.
+<code>inmet_qc()</code> flags the most common problems: values outside
+physical limits, internally inconsistent records (such as an hourly
+maximum below the minimum), isolated spikes, and sensors stuck on the
+same value. It adds a <code>&lt;variable&gt;_flag</code> column naming
+the failed checks, and <code>inmet_daily()</code> and
+<code>inmet_completeness()</code> then ignore the flagged values:</p>
+<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" tabindex="-1"></a>checked <span class="ot">&lt;-</span> <span class="fu">inmet_qc</span>(x)</span>
+<span id="cb10-2"><a href="#cb10-2" tabindex="-1"></a><span class="co">#&gt; Flagged 0 value(s) in 0 variable(s). See attr(x, &quot;qc_summary&quot;).</span></span></code></pre></div>
+<p>Station A801 passed every check in 2023. To see what a flag looks
+like, plant a sensor spike of 15 degC in one hour:</p>
+<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" tabindex="-1"></a>y <span class="ot">&lt;-</span> x</span>
+<span id="cb11-2"><a href="#cb11-2" tabindex="-1"></a>y<span class="sc">$</span>temp_dry_c[<span class="dv">1000</span>] <span class="ot">&lt;-</span> y<span class="sc">$</span>temp_dry_c[<span class="dv">1000</span>] <span class="sc">+</span> <span class="dv">15</span></span>
+<span id="cb11-3"><a href="#cb11-3" tabindex="-1"></a>flagged <span class="ot">&lt;-</span> <span class="fu">inmet_qc</span>(y, <span class="at">quiet =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb11-4"><a href="#cb11-4" tabindex="-1"></a>flagged[<span class="dv">998</span><span class="sc">:</span><span class="dv">1002</span>, <span class="fu">c</span>(<span class="st">&quot;datetime&quot;</span>, <span class="st">&quot;temp_dry_c&quot;</span>, <span class="st">&quot;temp_max_prev_c&quot;</span>, <span class="st">&quot;temp_dry_c_flag&quot;</span>)]</span>
+<span id="cb11-5"><a href="#cb11-5" tabindex="-1"></a><span class="co">#&gt;                 datetime temp_dry_c temp_max_prev_c   temp_dry_c_flag</span></span>
+<span id="cb11-6"><a href="#cb11-6" tabindex="-1"></a><span class="co">#&gt; 998  2023-02-12 02:00:00       24.2            24.6              &lt;NA&gt;</span></span>
+<span id="cb11-7"><a href="#cb11-7" tabindex="-1"></a><span class="co">#&gt; 999  2023-02-12 03:00:00       23.6            24.3              &lt;NA&gt;</span></span>
+<span id="cb11-8"><a href="#cb11-8" tabindex="-1"></a><span class="co">#&gt; 1000 2023-02-12 04:00:00       38.4            23.8 consistency,spike</span></span>
+<span id="cb11-9"><a href="#cb11-9" tabindex="-1"></a><span class="co">#&gt; 1001 2023-02-12 05:00:00       22.7            23.5              &lt;NA&gt;</span></span>
+<span id="cb11-10"><a href="#cb11-10" tabindex="-1"></a><span class="co">#&gt; 1002 2023-02-12 06:00:00       21.9            22.6              &lt;NA&gt;</span></span></code></pre></div>
+<p>The reading is both a spike and inconsistent with the hour’s maximum.
+<code>inmet_daily(flagged)</code> leaves it out of the daily statistics,
+and <code>attr(flagged, &quot;qc_summary&quot;)</code> counts the flags per
+variable and check. Across all 545 stations in the 2024 archive the same
+checks flag, for example, a stuck wind vane that reported 236 degrees
+for months and temperature readings that drop by 9 degC for one hour and
+return. Use <code>action = &quot;remove&quot;</code> to set flagged values to
+<code>NA</code> directly.</p>
+<p>These checks catch gross errors only. Comparing with neighbouring
+stations (<code>inmet_nearest()</code>) remains the most effective way
+to find subtler problems.</p>
+</div>
+
+
+
+<!-- code folding -->
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>
