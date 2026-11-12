@@ -12,27 +12,29 @@
 # * decimal commas, `-9999` or empty fields for missing values, and a trailing
 #   `;` that creates an empty phantom column.
 #
-# The parser reads the file once as text, splits fields with `strsplit()` and
-# converts every measurement column in a single vectorised step.
+# A file is read as raw bytes. The few header lines are decoded in R; the
+# data rows are parsed by C code (src/parse.c), which splits the fields and
+# converts dates, hours and numbers in a single pass.
 
-# Lines of one archive entry, read straight from the ZIP. If the entry cannot
-# be opened as a connection (e.g. unusual file names) it is extracted to
-# `work_dir` instead.
-.read_entry_lines <- function(archive, entry, work_dir) {
-  con <- tryCatch(unz(archive, entry), error = function(e) NULL)
-  lines <- if (!is.null(con)) tryCatch(.read_connection_lines(con), error = function(e) NULL)
-  if (!is.null(lines)) return(lines)
+# Raw bytes of one archive entry, read straight from the ZIP (`size` is its
+# uncompressed size). If the entry cannot be opened as a connection (e.g.
+# unusual file names) it is extracted to `work_dir` instead.
+.read_entry_bytes <- function(archive, entry, size, work_dir) {
+  bytes <- tryCatch({
+    con <- unz(archive, entry, open = "rb")
+    on.exit(close(con), add = TRUE)
+    readBin(con, "raw", n = size + 1)
+  }, error = function(e) NULL)
+  if (!is.null(bytes)) return(bytes)
 
   extracted <- utils::unzip(archive, files = entry, exdir = work_dir)
   if (!length(extracted)) stop("entry could not be extracted", call. = FALSE)
   on.exit(unlink(extracted, force = TRUE), add = TRUE)
-  .read_connection_lines(file(extracted[[1]]))
+  .read_file_bytes(extracted[[1]])
 }
 
-.read_connection_lines <- function(con) {
-  on.exit(try(close(con), silent = TRUE), add = TRUE)
-  open(con, "rb")
-  .decode_lines(readLines(con, warn = FALSE))
+.read_file_bytes <- function(path) {
+  readBin(path, "raw", n = file.size(path) + 1)
 }
 
 # Files are mostly Latin-1, but some are UTF-8. Lines that are valid UTF-8
@@ -50,21 +52,67 @@
 # Reads and parses a CSV file on disk. Kept for direct use on extracted files.
 .parse_inmet_csv <- function(path, tz, variables = NULL, dt_start = NULL,
                              dt_end = NULL, drop_empty = TRUE) {
-  .parse_inmet_lines(
-    .read_connection_lines(file(path)),
+  .parse_inmet_raw(
+    .read_file_bytes(path),
     tz = tz, variables = variables, dt_start = dt_start, dt_end = dt_end,
     drop_empty = drop_empty, fallback_code = .extract_station_code(basename(path))
   )
 }
 
+# Parses the lines of a file that are already in memory.
 .parse_inmet_lines <- function(lines, tz, variables = NULL, dt_start = NULL,
                                dt_end = NULL, drop_empty = TRUE,
                                fallback_code = NA_character_) {
-  header_row <- .find_column_header(lines)
-  metadata <- .parse_inmet_header(lines[seq_len(header_row - 1L)])
+  bytes <- charToRaw(paste0(paste(enc2utf8(lines), collapse = "\n"), "\n"))
+  .parse_inmet_raw(bytes, tz, variables, dt_start, dt_end, drop_empty, fallback_code)
+}
+
+# Number of bytes searched for the metadata block and the column header.
+.header_bytes <- 16384L
+
+# The first lines of a file (at most 30, the range searched for the column
+# header), split at the bytes `newlines` and still undecoded.
+.header_lines <- function(bytes, newlines) {
+  ends <- newlines[seq_len(min(30L, length(newlines)))] - 1L
+  starts <- if (length(ends)) c(1L, utils::head(ends, -1L) + 2L) else integer()
+  last_newline <- if (length(newlines)) newlines[[length(newlines)]] else 0L
+  if (length(ends) < 30L && length(bytes) <= .header_bytes && last_newline < length(bytes)) {
+    # a last line without a final newline
+    starts <- c(starts, last_newline + 1L)
+    ends <- c(ends, length(bytes))
+  }
+  vapply(seq_along(starts), function(i) {
+    line <- if (ends[[i]] >= starts[[i]]) bytes[starts[[i]]:ends[[i]]] else raw(0)
+    if (length(line) && line[[length(line)]] == as.raw(0x0d)) line <- line[-length(line)]
+    rawToChar(line)
+  }, character(1))
+}
+
+# Parses a file and applies the filters (see .filter_entry()). Used for
+# direct parsing of files and lines; inmet_read() parses and filters
+# separately so that the parsed data can be cached.
+.parse_inmet_raw <- function(bytes, tz, variables = NULL, dt_start = NULL,
+                             dt_end = NULL, drop_empty = TRUE,
+                             fallback_code = NA_character_) {
+  .filter_entry(
+    .parse_inmet_all(bytes, fallback_code), tz, variables,
+    list(start = dt_start, end = dt_end), drop_empty
+  )
+}
+
+# Every row and column of a file, with UTC timestamps (NULL if it has no data
+# rows). Rows in which every measurement is missing, and rows with an invalid
+# timestamp (NA), are kept.
+.parse_inmet_all <- function(bytes, fallback_code = NA_character_) {
+  head_size <- min(length(bytes), .header_bytes)
+  newlines <- which(bytes[seq_len(head_size)] == as.raw(0x0a))
+  head_lines <- .decode_lines(.header_lines(bytes, newlines))
+
+  header_row <- .find_column_header(head_lines)
+  metadata <- .parse_inmet_header(head_lines[seq_len(header_row - 1L)])
   if (is.na(metadata$code) || !nzchar(metadata$code)) metadata$code <- fallback_code
 
-  raw_names <- trimws(strsplit(lines[[header_row]], ";", fixed = TRUE)[[1]])
+  raw_names <- trimws(strsplit(head_lines[[header_row]], ";", fixed = TRUE)[[1]])
   keep <- which(nzchar(raw_names) & !toupper(raw_names) %in% c("X", "X."))
   col_names <- .canonical_names(raw_names[keep])
   date_col <- match("date_raw", col_names)
@@ -72,35 +120,17 @@
   if (anyNA(c(date_col, hour_col))) {
     stop("Required date and hour columns were not recognized.", call. = FALSE)
   }
-
-  body <- lines[-seq_len(header_row)]
-  body <- body[grepl(";", body, fixed = TRUE)]
-  if (!length(body)) return(NULL)
-  # Commas only appear as decimal marks (fields are separated by ";" and dates
-  # use "-" or "/"), so they are converted once per line, not once per cell.
-  cells <- .split_fields(chartr(",", ".", body), length(raw_names))[keep, , drop = FALSE]
-
   measure_cols <- setdiff(seq_along(col_names), c(date_col, hour_col))
-  values <- .parse_number_matrix(cells[measure_cols, , drop = FALSE])
 
-  rows <- seq_len(ncol(cells))
-  if (drop_empty && length(measure_cols)) {
-    rows <- which(colSums(!is.na(values)) > 0L)
-    if (!length(rows)) return(NULL)
-  }
+  # data rows start after the newline that ends the header line
+  offset <- if (header_row <= length(newlines)) newlines[[header_row]] else length(bytes)
+  parsed <- .Call(C_parse_inmet_body, bytes, as.integer(offset), length(raw_names),
+                  keep[[date_col]], keep[[hour_col]], as.integer(keep[measure_cols]))
+  n <- length(parsed$day)
+  if (!n) return(NULL)
 
-  datetime <- .parse_inmet_datetime(cells[date_col, rows], cells[hour_col, rows], tz)
-  invalid <- sum(is.na(datetime))
-  if (invalid) warning(invalid, " row(s) have an invalid timestamp.", call. = FALSE)
-
-  in_bounds <- rep(TRUE, length(rows))
-  if (!is.null(dt_start)) in_bounds <- in_bounds & !is.na(datetime) & datetime >= dt_start
-  if (!is.null(dt_end)) in_bounds <- in_bounds & !is.na(datetime) & datetime <= dt_end
-  if (!any(in_bounds)) return(NULL)
-  rows <- rows[in_bounds]
-  datetime <- datetime[in_bounds]
-
-  n <- length(rows)
+  # dates in days and hours in seconds add up to UTC instants (2400 is 00:00
+  # of the next day)
   columns <- list(
     station_code = rep(metadata$code, n),
     station_name = rep(metadata$name, n),
@@ -109,44 +139,48 @@
     latitude = rep(metadata$latitude, n),
     longitude = rep(metadata$longitude, n),
     elevation = rep(metadata$elevation, n),
-    datetime = datetime
+    datetime = .POSIXct(parsed$day * 86400 + parsed$seconds, tz = "UTC")
   )
   measure_names <- col_names[measure_cols]
-  for (j in seq_along(measure_cols)) {
-    if (is.null(variables) || measure_names[[j]] %in% variables) {
-      columns[[measure_names[[j]]]] <- values[j, rows]
-    }
-  }
+  for (j in seq_along(measure_cols)) columns[[measure_names[[j]]]] <- parsed$values[j, ]
   .new_data_frame(columns, n)
 }
+
+# Applies what the user asked for to the rows of one file (NULL if nothing is
+# left): drop hours without any measurement, warn about invalid timestamps,
+# keep the date limits (interpreted in `tz`), show the time in `tz` and keep
+# only some measurement columns.
+.filter_entry <- function(data, tz, variables = NULL, bounds = list(),
+                          drop_empty = TRUE) {
+  if (is.null(data)) return(NULL)
+  measure <- setdiff(names(data), .inmet_id_columns())
+  keep <- rep(TRUE, nrow(data))
+  if (drop_empty && length(measure)) {
+    present <- Reduce(`|`, lapply(unclass(data)[measure], function(v) !is.na(v)))
+    keep <- present
+    if (!any(keep)) return(NULL)
+  }
+
+  datetime <- data$datetime
+  attr(datetime, "tzone") <- tz
+  invalid <- sum(is.na(datetime[keep]))
+  if (invalid) warning(invalid, " row(s) have an invalid timestamp.", call. = FALSE)
+  if (!is.null(bounds$start)) keep <- keep & !is.na(datetime) & datetime >= bounds$start
+  if (!is.null(bounds$end)) keep <- keep & !is.na(datetime) & datetime <= bounds$end
+  if (!any(keep)) return(NULL)
+
+  data$datetime <- datetime
+  if (!is.null(variables)) data <- data[setdiff(names(data), setdiff(measure, variables))]
+  if (!all(keep)) data <- data[keep, , drop = FALSE]
+  data
+}
+
 
 .find_column_header <- function(lines) {
   scan <- .normalize_text(lines[seq_len(min(length(lines), 30L))])
   hits <- which(grepl("(^|;)DATA", scan) & grepl("HORA", scan))
   if (!length(hits)) stop("Could not locate the CSV column header.", call. = FALSE)
   max(hits)
-}
-
-# Splits semicolon-separated lines into a character matrix with one column per
-# row of data. Short rows are padded with NA and long rows truncated.
-.split_fields <- function(body, n_fields) {
-  fields <- strsplit(body, ";", fixed = TRUE)
-  if (all(lengths(fields) == n_fields)) {
-    return(matrix(unlist(fields, use.names = FALSE), nrow = n_fields))
-  }
-  matrix(
-    vapply(fields, function(f) { length(f) <- n_fields; f }, character(n_fields)),
-    nrow = n_fields
-  )
-}
-
-# Character matrix (decimal points) -> numeric matrix. Empty strings, "//" and
-# the -9999 sentinel become NA. as.numeric() ignores surrounding blanks.
-.parse_number_matrix <- function(x) {
-  values <- suppressWarnings(as.numeric(x))
-  values[!is.na(values) & values == -9999] <- NA_real_
-  dim(values) <- dim(x)
-  values
 }
 
 .parse_inmet_number <- function(x) {
@@ -234,39 +268,6 @@
 .rename_columns <- function(df) {
   names(df) <- .canonical_names(names(df))
   df
-}
-
-# UTC timestamps from the date and hour columns. Dates are parsed once per
-# distinct value (a file has 24 rows per date) with the format chosen by an
-# exact pattern, never by trial and error: strptime() accepts one- to
-# four-digit years, so trying "%Y-%m-%d" on "04-01-2020" would yield year 4.
-# Hours are added arithmetically, which also maps "2400" to 00:00 next day.
-.parse_inmet_datetime <- function(date, hour, tz) {
-  date <- trimws(as.character(date))
-  unique_dates <- unique(date)
-  parsed <- rep(as.Date(NA), length(unique_dates))
-  patterns <- c(
-    "%Y-%m-%d" = "^\\d{4}-\\d{2}-\\d{2}$",
-    "%Y/%m/%d" = "^\\d{4}/\\d{2}/\\d{2}$",
-    "%d/%m/%Y" = "^\\d{2}/\\d{2}/\\d{4}$",
-    "%d-%m-%Y" = "^\\d{2}-\\d{2}-\\d{4}$"
-  )
-  for (format in names(patterns)) {
-    hit <- !is.na(unique_dates) & grepl(patterns[[format]], unique_dates)
-    if (any(hit)) parsed[hit] <- as.Date(unique_dates[hit], format = format)
-  }
-  day <- parsed[match(date, unique_dates)]
-
-  digits <- gsub("[^0-9]", "", as.character(hour))
-  digits[!is.na(digits) & nzchar(digits) & nchar(digits) < 4L] <-
-    sprintf("%04d", suppressWarnings(as.integer(digits[!is.na(digits) & nzchar(digits) & nchar(digits) < 4L])))
-  hh <- suppressWarnings(as.integer(substr(digits, 1L, 2L)))
-  mm <- suppressWarnings(as.integer(substr(digits, 3L, 4L)))
-  valid_time <- !is.na(hh) & !is.na(mm) & nchar(digits) == 4L & mm < 60L &
-    (hh < 24L | (hh == 24L & mm == 0L))
-  seconds <- ifelse(valid_time, hh * 3600 + mm * 60, NA_real_)
-
-  .POSIXct(as.numeric(day) * 86400 + seconds, tz = tz)
 }
 
 .convert_tz <- function(x, tz) {

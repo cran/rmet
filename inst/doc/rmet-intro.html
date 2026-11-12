@@ -410,13 +410,15 @@ downloads it if so.</p>
 <div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a><span class="fu">dim</span>(rmet_example)</span>
 <span id="cb7-2"><a href="#cb7-2" tabindex="-1"></a><span class="co">#&gt; [1] 8663   25</span></span>
 <span id="cb7-3"><a href="#cb7-3" tabindex="-1"></a><span class="fu">head</span>(rmet_example[, <span class="fu">c</span>(<span class="st">&quot;datetime&quot;</span>, <span class="st">&quot;temp_dry_c&quot;</span>, <span class="st">&quot;temp_max_prev_c&quot;</span>, <span class="st">&quot;precip_mm&quot;</span>)])</span>
-<span id="cb7-4"><a href="#cb7-4" tabindex="-1"></a><span class="co">#&gt;              datetime temp_dry_c temp_max_prev_c precip_mm</span></span>
-<span id="cb7-5"><a href="#cb7-5" tabindex="-1"></a><span class="co">#&gt; 1 2023-01-01 00:00:00       26.5            27.7         0</span></span>
-<span id="cb7-6"><a href="#cb7-6" tabindex="-1"></a><span class="co">#&gt; 2 2023-01-01 01:00:00       26.8            26.9         0</span></span>
-<span id="cb7-7"><a href="#cb7-7" tabindex="-1"></a><span class="co">#&gt; 3 2023-01-01 02:00:00       26.3            26.9         0</span></span>
-<span id="cb7-8"><a href="#cb7-8" tabindex="-1"></a><span class="co">#&gt; 4 2023-01-01 03:00:00       25.2            26.6         0</span></span>
-<span id="cb7-9"><a href="#cb7-9" tabindex="-1"></a><span class="co">#&gt; 5 2023-01-01 04:00:00       24.1            25.2         0</span></span>
-<span id="cb7-10"><a href="#cb7-10" tabindex="-1"></a><span class="co">#&gt; 6 2023-01-01 05:00:00       23.1            24.1         0</span></span></code></pre></div>
+<span id="cb7-4"><a href="#cb7-4" tabindex="-1"></a><span class="co">#&gt; &lt;rmet hourly&gt; 6 rows x 4 columns</span></span>
+<span id="cb7-5"><a href="#cb7-5" tabindex="-1"></a><span class="co">#&gt; Period: 2023-01-01 to 2023-01-01 05:00:00 (UTC)</span></span>
+<span id="cb7-6"><a href="#cb7-6" tabindex="-1"></a><span class="co">#&gt;              datetime temp_dry_c temp_max_prev_c precip_mm</span></span>
+<span id="cb7-7"><a href="#cb7-7" tabindex="-1"></a><span class="co">#&gt; 1 2023-01-01 00:00:00       26.5            27.7         0</span></span>
+<span id="cb7-8"><a href="#cb7-8" tabindex="-1"></a><span class="co">#&gt; 2 2023-01-01 01:00:00       26.8            26.9         0</span></span>
+<span id="cb7-9"><a href="#cb7-9" tabindex="-1"></a><span class="co">#&gt; 3 2023-01-01 02:00:00       26.3            26.9         0</span></span>
+<span id="cb7-10"><a href="#cb7-10" tabindex="-1"></a><span class="co">#&gt; 4 2023-01-01 03:00:00       25.2            26.6         0</span></span>
+<span id="cb7-11"><a href="#cb7-11" tabindex="-1"></a><span class="co">#&gt; 5 2023-01-01 04:00:00       24.1            25.2         0</span></span>
+<span id="cb7-12"><a href="#cb7-12" tabindex="-1"></a><span class="co">#&gt; 6 2023-01-01 05:00:00       23.1            24.1         0</span></span></code></pre></div>
 <p>Timestamps are in <strong>UTC</strong>, as in the source files, and
 each row describes the hour <em>ending</em> at <code>datetime</code>.
 Pass <code>tz = &quot;America/Sao_Paulo&quot;</code> (or any other Olson name) to
@@ -446,13 +448,15 @@ each hour to the station’s local day, ignores values flagged by
 per day (20 by default):</p>
 <div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a>daily <span class="ot">&lt;-</span> <span class="fu">inmet_daily</span>(checked)</span>
 <span id="cb9-2"><a href="#cb9-2" tabindex="-1"></a><span class="fu">head</span>(daily[, <span class="fu">c</span>(<span class="st">&quot;date&quot;</span>, <span class="st">&quot;n_hours&quot;</span>, <span class="st">&quot;temp_max_c&quot;</span>, <span class="st">&quot;temp_min_c&quot;</span>, <span class="st">&quot;precip_mm&quot;</span>)])</span>
-<span id="cb9-3"><a href="#cb9-3" tabindex="-1"></a><span class="co">#&gt;         date n_hours temp_max_c temp_min_c precip_mm</span></span>
-<span id="cb9-4"><a href="#cb9-4" tabindex="-1"></a><span class="co">#&gt; 1 2022-12-31       4         NA         NA        NA</span></span>
-<span id="cb9-5"><a href="#cb9-5" tabindex="-1"></a><span class="co">#&gt; 2 2023-01-01      24       37.0       20.8       0.0</span></span>
-<span id="cb9-6"><a href="#cb9-6" tabindex="-1"></a><span class="co">#&gt; 3 2023-01-02      24       33.6       23.6      10.2</span></span>
-<span id="cb9-7"><a href="#cb9-7" tabindex="-1"></a><span class="co">#&gt; 4 2023-01-03      24       30.0       20.8       0.0</span></span>
-<span id="cb9-8"><a href="#cb9-8" tabindex="-1"></a><span class="co">#&gt; 5 2023-01-04      24       32.9       20.0       0.0</span></span>
-<span id="cb9-9"><a href="#cb9-9" tabindex="-1"></a><span class="co">#&gt; 6 2023-01-05      24       33.0       19.3       0.0</span></span></code></pre></div>
+<span id="cb9-3"><a href="#cb9-3" tabindex="-1"></a><span class="co">#&gt; &lt;rmet daily&gt; 6 rows x 5 columns</span></span>
+<span id="cb9-4"><a href="#cb9-4" tabindex="-1"></a><span class="co">#&gt; Period: 2022-12-31 to 2023-01-05</span></span>
+<span id="cb9-5"><a href="#cb9-5" tabindex="-1"></a><span class="co">#&gt;         date n_hours temp_max_c temp_min_c precip_mm</span></span>
+<span id="cb9-6"><a href="#cb9-6" tabindex="-1"></a><span class="co">#&gt; 1 2022-12-31       4         NA         NA        NA</span></span>
+<span id="cb9-7"><a href="#cb9-7" tabindex="-1"></a><span class="co">#&gt; 2 2023-01-01      24       37.0       20.8       0.0</span></span>
+<span id="cb9-8"><a href="#cb9-8" tabindex="-1"></a><span class="co">#&gt; 3 2023-01-02      24       33.6       23.6      10.2</span></span>
+<span id="cb9-9"><a href="#cb9-9" tabindex="-1"></a><span class="co">#&gt; 4 2023-01-03      24       30.0       20.8       0.0</span></span>
+<span id="cb9-10"><a href="#cb9-10" tabindex="-1"></a><span class="co">#&gt; 5 2023-01-04      24       32.9       20.0       0.0</span></span>
+<span id="cb9-11"><a href="#cb9-11" tabindex="-1"></a><span class="co">#&gt; 6 2023-01-05      24       33.0       19.3       0.0</span></span></code></pre></div>
 <p>The first row is 31 December 2022: the records stamped 00:00 to 03:00
 UTC on 1 January 2023 describe the last hours of 31 December in Porto
 Alegre. With only four hours of data that day’s values are

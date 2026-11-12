@@ -1,7 +1,7 @@
 Package: rmet
 Type: Package
 Title: Download and Read Brazilian Meteorological Data from INMET
-Version: 0.3.0
+Version: 0.4.0
 Authors@R: person("Rodrigo Fonseca", "Villa",
                   email = "rodrigo03.villa@gmail.com",
                   role = c("aut", "cre"),
@@ -27,13 +27,13 @@ URL: https://github.com/rodrigosqrt3/rmet
 BugReports: https://github.com/rodrigosqrt3/rmet/issues
 RoxygenNote: 7.3.3
 Imports: curl (>= 4.0), jsonlite
-Suggests: spelling, testthat (>= 3.0.0), knitr, rmarkdown, sf
+Suggests: spelling, testthat (>= 3.0.0), knitr, rmarkdown, sf, withr
 VignetteBuilder: knitr
 Config/testthat/edition: 3
-NeedsCompilation: no
-Packaged: 2026-10-19 19:55:25 UTC; rodri
+NeedsCompilation: yes
+Packaged: 2026-11-12 14:56:29 UTC; rodri
 Author: Rodrigo Fonseca Villa [aut, cre] (ORCID:
     <https://orcid.org/0009-0005-2938-2270>)
 Maintainer: Rodrigo Fonseca Villa <rodrigo03.villa@gmail.com>
 Repository: CRAN
-Date/Publication: 2026-10-20 13:30:02 UTC
+Date/Publication: 2026-11-12 15:20:02 UTC

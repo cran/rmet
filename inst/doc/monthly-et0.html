@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+
+
+<title>Monthly Values, Evapotranspiration and Derived Variables</title>
+
+<script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
+// be compatible with the behavior of Pandoc < 2.8).
+document.addEventListener('DOMContentLoaded', function(e) {
+  var hs = document.querySelectorAll("div.section[class*='level'] > :first-child");
+  var i, h, a;
+  for (i = 0; i < hs.length; i++) {
+    h = hs[i];
+    if (!/^h[1-6]$/i.test(h.tagName)) continue;  // it should be a header h1-h6
+    a = h.attributes;
+    while (a.length > 0) h.removeAttribute(a[0].name);
+  }
+});
+</script>
+
+<style type="text/css">
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+span.underline{text-decoration: underline;}
+div.column{display: inline-block; vertical-align: top; width: 50%;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+</style>
+
+
+
+<style type="text/css">
+code {
+white-space: pre;
+}
+.sourceCode {
+overflow: visible;
+}
+</style>
+<style type="text/css" data-origin="pandoc">
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #aaaaaa;
+}
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa; padding-left: 4px; }
+div.sourceCode
+{ }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } 
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.at { color: #7d9029; } 
+code span.bn { color: #40a070; } 
+code span.bu { color: #008000; } 
+code span.cf { color: #007020; font-weight: bold; } 
+code span.ch { color: #4070a0; } 
+code span.cn { color: #880000; } 
+code span.co { color: #60a0b0; font-style: italic; } 
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.do { color: #ba2121; font-style: italic; } 
+code span.dt { color: #902000; } 
+code span.dv { color: #40a070; } 
+code span.er { color: #ff0000; font-weight: bold; } 
+code span.ex { } 
+code span.fl { color: #40a070; } 
+code span.fu { color: #06287e; } 
+code span.im { color: #008000; font-weight: bold; } 
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.kw { color: #007020; font-weight: bold; } 
+code span.op { color: #666666; } 
+code span.ot { color: #007020; } 
+code span.pp { color: #bc7a00; } 
+code span.sc { color: #4070a0; } 
+code span.ss { color: #bb6688; } 
+code span.st { color: #4070a0; } 
+code span.va { color: #19177c; } 
+code span.vs { color: #4070a0; } 
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } 
+</style>
+<script>
+// apply pandoc div.sourceCode style to pre.sourceCode instead
+(function() {
+  var sheets = document.styleSheets;
+  for (var i = 0; i < sheets.length; i++) {
+    if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
+    try { var rules = sheets[i].cssRules; } catch (e) { continue; }
+    var j = 0;
+    while (j < rules.length) {
+      var rule = rules[j];
+      // check if there is a div.sourceCode rule
+      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") {
+        j++;
+        continue;
+      }
+      var style = rule.style.cssText;
+      // check if color or background-color is set
+      if (rule.style.color === '' && rule.style.backgroundColor === '') {
+        j++;
+        continue;
+      }
+      // replace div.sourceCode by a pre.sourceCode rule
+      sheets[i].deleteRule(j);
+      sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
+    }
+  }
+})();
+</script>
+
+
+
+
+<style type="text/css">body {
+background-color: #fff;
+margin: 1em auto;
+max-width: 700px;
+overflow: visible;
+padding-left: 2em;
+padding-right: 2em;
+font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+font-size: 14px;
+line-height: 1.35;
+}
+#TOC {
+clear: both;
+margin: 0 0 10px 10px;
+padding: 4px;
+width: 400px;
+border: 1px solid #CCCCCC;
+border-radius: 5px;
+background-color: #f6f6f6;
+font-size: 13px;
+line-height: 1.3;
+}
+#TOC .toctitle {
+font-weight: bold;
+font-size: 15px;
+margin-left: 5px;
+}
+#TOC ul {
+padding-left: 40px;
+margin-left: -1.5em;
+margin-top: 5px;
+margin-bottom: 5px;
+}
+#TOC ul ul {
+margin-left: -2em;
+}
+#TOC li {
+line-height: 16px;
+}
+table {
+margin: 1em auto;
+border-width: 1px;
+border-color: #DDDDDD;
+border-style: outset;
+border-collapse: collapse;
+}
+table th {
+border-width: 2px;
+padding: 5px;
+border-style: inset;
+}
+table td {
+border-width: 1px;
+border-style: inset;
+line-height: 18px;
+padding: 5px 5px;
+}
+table, table th, table td {
+border-left-style: none;
+border-right-style: none;
+}
+table thead, table tr.even {
+background-color: #f7f7f7;
+}
+p {
+margin: 0.5em 0;
+}
+blockquote {
+background-color: #f6f6f6;
+padding: 0.25em 0.75em;
+}
+hr {
+border-style: solid;
+border: none;
+border-top: 1px solid #777;
+margin: 28px 0;
+}
+dl {
+margin-left: 0;
+}
+dl dd {
+margin-bottom: 13px;
+margin-left: 13px;
+}
+dl dt {
+font-weight: bold;
+}
+ul {
+margin-top: 0;
+}
+ul li {
+list-style: circle outside;
+}
+ul ul {
+margin-bottom: 0;
+}
+pre, code {
+background-color: #f7f7f7;
+border-radius: 3px;
+color: #333;
+white-space: pre-wrap; 
+}
+pre {
+border-radius: 3px;
+margin: 5px 0px 10px 0px;
+padding: 10px;
+}
+pre:not([class]) {
+background-color: #f7f7f7;
+}
+code {
+font-family: Consolas, Monaco, 'Courier New', monospace;
+font-size: 85%;
+}
+p > code, li > code {
+padding: 2px 0px;
+}
+div.figure {
+text-align: center;
+}
+img {
+background-color: #FFFFFF;
+padding: 2px;
+border: 1px solid #DDDDDD;
+border-radius: 3px;
+border: 1px solid #CCCCCC;
+margin: 0 5px;
+}
+h1 {
+margin-top: 0;
+font-size: 35px;
+line-height: 40px;
+}
+h2 {
+border-bottom: 4px solid #f7f7f7;
+padding-top: 10px;
+padding-bottom: 2px;
+font-size: 145%;
+}
+h3 {
+border-bottom: 2px solid #f7f7f7;
+padding-top: 10px;
+font-size: 120%;
+}
+h4 {
+border-bottom: 1px solid #f7f7f7;
+margin-left: 8px;
+font-size: 105%;
+}
+h5, h6 {
+border-bottom: 1px solid #ccc;
+font-size: 105%;
+}
+a {
+color: #0033dd;
+text-decoration: none;
+}
+a:hover {
+color: #6666ff; }
+a:visited {
+color: #800080; }
+a:visited:hover {
+color: #BB00BB; }
+a[href^="http:"] {
+text-decoration: underline; }
+a[href^="https:"] {
+text-decoration: underline; }
+
+code > span.kw { color: #555; font-weight: bold; } 
+code > span.dt { color: #902000; } 
+code > span.dv { color: #40a070; } 
+code > span.bn { color: #d14; } 
+code > span.fl { color: #d14; } 
+code > span.ch { color: #d14; } 
+code > span.st { color: #d14; } 
+code > span.co { color: #888888; font-style: italic; } 
+code > span.ot { color: #007020; } 
+code > span.al { color: #ff0000; font-weight: bold; } 
+code > span.fu { color: #900; font-weight: bold; } 
+code > span.er { color: #a61717; background-color: #e3d2d2; } 
+</style>
+
+
+
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">Monthly Values, Evapotranspiration and
+Derived Variables</h1>
+
+
+
+<p>This vignette goes from hourly data to quantities used in
+agriculture, hydrology and climatology: derived hourly variables,
+reference evapotranspiration and monthly summaries. It uses the
+one-station example dataset shipped with the package, so every chunk
+runs offline. With your own data, replace <code>rmet_example</code> by
+the result of <code>inmet_get()</code>.</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="fu">library</span>(rmet)</span>
+<span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a>hourly <span class="ot">&lt;-</span> rmet_example</span>
+<span id="cb1-3"><a href="#cb1-3" tabindex="-1"></a>hourly[, <span class="fu">c</span>(<span class="st">&quot;station_code&quot;</span>, <span class="st">&quot;datetime&quot;</span>, <span class="st">&quot;temp_dry_c&quot;</span>, <span class="st">&quot;humid_rel_pct&quot;</span>, <span class="st">&quot;precip_mm&quot;</span>)]</span>
+<span id="cb1-4"><a href="#cb1-4" tabindex="-1"></a><span class="co">#&gt; &lt;rmet hourly&gt; 8,663 rows x 5 columns, 1 station</span></span>
+<span id="cb1-5"><a href="#cb1-5" tabindex="-1"></a><span class="co">#&gt; Period: 2023-01-01 to 2023-12-31 23:00:00 (UTC)</span></span>
+<span id="cb1-6"><a href="#cb1-6" tabindex="-1"></a><span class="co">#&gt;    station_code            datetime temp_dry_c humid_rel_pct precip_mm</span></span>
+<span id="cb1-7"><a href="#cb1-7" tabindex="-1"></a><span class="co">#&gt; 1          A801 2023-01-01 00:00:00       26.5            55         0</span></span>
+<span id="cb1-8"><a href="#cb1-8" tabindex="-1"></a><span class="co">#&gt; 2          A801 2023-01-01 01:00:00       26.8            49         0</span></span>
+<span id="cb1-9"><a href="#cb1-9" tabindex="-1"></a><span class="co">#&gt; 3          A801 2023-01-01 02:00:00       26.3            50         0</span></span>
+<span id="cb1-10"><a href="#cb1-10" tabindex="-1"></a><span class="co">#&gt; 4          A801 2023-01-01 03:00:00       25.2            59         0</span></span>
+<span id="cb1-11"><a href="#cb1-11" tabindex="-1"></a><span class="co">#&gt; 5          A801 2023-01-01 04:00:00       24.1            65         0</span></span>
+<span id="cb1-12"><a href="#cb1-12" tabindex="-1"></a><span class="co">#&gt; 6          A801 2023-01-01 05:00:00       23.1            73         0</span></span>
+<span id="cb1-13"><a href="#cb1-13" tabindex="-1"></a><span class="co">#&gt; 7          A801 2023-01-01 06:00:00       22.0            81         0</span></span>
+<span id="cb1-14"><a href="#cb1-14" tabindex="-1"></a><span class="co">#&gt; 8          A801 2023-01-01 07:00:00       21.5            89         0</span></span>
+<span id="cb1-15"><a href="#cb1-15" tabindex="-1"></a><span class="co">#&gt; 9          A801 2023-01-01 08:00:00       21.0            91         0</span></span>
+<span id="cb1-16"><a href="#cb1-16" tabindex="-1"></a><span class="co">#&gt; 10         A801 2023-01-01 09:00:00       21.1            91         0</span></span>
+<span id="cb1-17"><a href="#cb1-17" tabindex="-1"></a><span class="co">#&gt; ... with 8,653 more rows</span></span></code></pre></div>
+<div id="hourly-data-class-and-summary" class="section level2">
+<h2>Hourly data: class and summary</h2>
+<p>Results of <code>inmet_read()</code> and <code>inmet_get()</code> are
+<code>rmet_hourly</code> data frames. They are ordinary data frames,
+with a compact <code>print()</code> and a <code>summary()</code> that
+shows, per station, the period and how complete the measurements
+are:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a><span class="fu">summary</span>(hourly)</span>
+<span id="cb2-2"><a href="#cb2-2" tabindex="-1"></a><span class="co">#&gt; &lt;summary of rmet hourly data&gt;</span></span>
+<span id="cb2-3"><a href="#cb2-3" tabindex="-1"></a><span class="co">#&gt;   station_code n_rows      first                last complete_pct</span></span>
+<span id="cb2-4"><a href="#cb2-4" tabindex="-1"></a><span class="co">#&gt; 1         A801   8663 2023-01-01 2023-12-31 23:00:00         97.3</span></span>
+<span id="cb2-5"><a href="#cb2-5" tabindex="-1"></a><span class="co">#&gt; complete_pct: mean percentage of non-missing values in the measurement columns</span></span></code></pre></div>
+</div>
+<div id="derived-variables" class="section level2">
+<h2>1. Derived variables</h2>
+<p><code>inmet_derive()</code> adds vapour pressure, vapour pressure
+deficit (VPD), wind components and the heat index. VPD, in kPa, is the
+usual measure of the drying power of the air:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a>hourly <span class="ot">&lt;-</span> <span class="fu">inmet_derive</span>(hourly)</span>
+<span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a><span class="fu">summary</span>(<span class="fu">as.data.frame</span>(hourly[, <span class="fu">c</span>(<span class="st">&quot;vapor_pressure_kpa&quot;</span>, <span class="st">&quot;vpd_kpa&quot;</span>, <span class="st">&quot;heat_index_c&quot;</span>)]))</span>
+<span id="cb3-3"><a href="#cb3-3" tabindex="-1"></a><span class="co">#&gt;  vapor_pressure_kpa    vpd_kpa         heat_index_c  </span></span>
+<span id="cb3-4"><a href="#cb3-4" tabindex="-1"></a><span class="co">#&gt;  Min.   :0.4933     Min.   :0.02905   Min.   : 3.02  </span></span>
+<span id="cb3-5"><a href="#cb3-5" tabindex="-1"></a><span class="co">#&gt;  1st Qu.:1.5274     1st Qu.:0.20492   1st Qu.:16.53  </span></span>
+<span id="cb3-6"><a href="#cb3-6" tabindex="-1"></a><span class="co">#&gt;  Median :1.8534     Median :0.44492   Median :20.67  </span></span>
+<span id="cb3-7"><a href="#cb3-7" tabindex="-1"></a><span class="co">#&gt;  Mean   :1.8670     Mean   :0.67634   Mean   :20.86  </span></span>
+<span id="cb3-8"><a href="#cb3-8" tabindex="-1"></a><span class="co">#&gt;  3rd Qu.:2.2669     3rd Qu.:0.93302   3rd Qu.:24.45  </span></span>
+<span id="cb3-9"><a href="#cb3-9" tabindex="-1"></a><span class="co">#&gt;  Max.   :3.4621     Max.   :5.10102   Max.   :45.60  </span></span>
+<span id="cb3-10"><a href="#cb3-10" tabindex="-1"></a><span class="co">#&gt;  NA&#39;s   :3          NA&#39;s   :3         NA&#39;s   :3</span></span></code></pre></div>
+<p>The wind components follow the meteorological convention: the
+direction is where the wind comes <em>from</em>, so a wind from the west
+(270 degrees) has a positive <code>wind_u_ms</code> (it blows towards
+the east).</p>
+<p>Values flagged by <code>inmet_qc()</code> are ignored, so run the
+quality control first:</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a>hourly <span class="ot">&lt;-</span> <span class="fu">inmet_qc</span>(hourly, <span class="at">quiet =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a>hourly <span class="ot">&lt;-</span> <span class="fu">inmet_derive</span>(hourly)</span></code></pre></div>
+</div>
+<div id="daily-values-and-reference-evapotranspiration" class="section level2">
+<h2>2. Daily values and reference evapotranspiration</h2>
+<p><code>inmet_daily()</code> builds daily summaries in each station’s
+local time. <code>inmet_et0()</code> adds the FAO-56 Penman-Monteith
+grass reference evapotranspiration, <code>et0_mm</code>, in mm per
+day:</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a>daily <span class="ot">&lt;-</span> <span class="fu">inmet_daily</span>(hourly)</span>
+<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a>daily <span class="ot">&lt;-</span> <span class="fu">inmet_et0</span>(daily)</span>
+<span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a><span class="fu">head</span>(daily[, <span class="fu">c</span>(<span class="st">&quot;date&quot;</span>, <span class="st">&quot;temp_max_c&quot;</span>, <span class="st">&quot;temp_min_c&quot;</span>, <span class="st">&quot;radiation_mj_m2&quot;</span>, <span class="st">&quot;et0_mm&quot;</span>)])</span>
+<span id="cb5-4"><a href="#cb5-4" tabindex="-1"></a><span class="co">#&gt; &lt;rmet daily&gt; 6 rows x 5 columns</span></span>
+<span id="cb5-5"><a href="#cb5-5" tabindex="-1"></a><span class="co">#&gt; Period: 2022-12-31 to 2023-01-05</span></span>
+<span id="cb5-6"><a href="#cb5-6" tabindex="-1"></a><span class="co">#&gt;         date temp_max_c temp_min_c radiation_mj_m2   et0_mm</span></span>
+<span id="cb5-7"><a href="#cb5-7" tabindex="-1"></a><span class="co">#&gt; 1 2022-12-31         NA         NA              NA       NA</span></span>
+<span id="cb5-8"><a href="#cb5-8" tabindex="-1"></a><span class="co">#&gt; 2 2023-01-01       37.0       20.8         28.9801 6.653436</span></span>
+<span id="cb5-9"><a href="#cb5-9" tabindex="-1"></a><span class="co">#&gt; 3 2023-01-02       33.6       23.6         19.3385 4.735852</span></span>
+<span id="cb5-10"><a href="#cb5-10" tabindex="-1"></a><span class="co">#&gt; 4 2023-01-03       30.0       20.8         28.6707 5.870368</span></span>
+<span id="cb5-11"><a href="#cb5-11" tabindex="-1"></a><span class="co">#&gt; 5 2023-01-04       32.9       20.0         29.5361 6.263259</span></span>
+<span id="cb5-12"><a href="#cb5-12" tabindex="-1"></a><span class="co">#&gt; 6 2023-01-05       33.0       19.3         30.7514 6.600444</span></span></code></pre></div>
+<p>Two points deserve care. First, <code>et0_mm</code> is
+<code>NA</code> on days when any input is missing, so the
+<code>min_hours</code> rule of <code>inmet_daily()</code> also applies
+to it. Second, daily radiation is the sum of the hourly values, so it
+underestimates the true value on days with missing daytime hours.
+Compare <code>n_hours</code> and the inputs before using ET0 for
+decisions such as irrigation scheduling.</p>
+</div>
+<div id="monthly-values" class="section level2">
+<h2>3. Monthly values</h2>
+<p><code>inmet_monthly()</code> aggregates the daily values by calendar
+month. A monthly value is <code>NA</code> unless at least
+<code>min_days</code> days (20 by default) have a valid value:</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a>monthly <span class="ot">&lt;-</span> <span class="fu">inmet_monthly</span>(daily)</span>
+<span id="cb6-2"><a href="#cb6-2" tabindex="-1"></a>monthly[, <span class="fu">c</span>(<span class="st">&quot;month&quot;</span>, <span class="st">&quot;n_days&quot;</span>, <span class="st">&quot;temp_mean_c&quot;</span>, <span class="st">&quot;precip_mm&quot;</span>, <span class="st">&quot;rain_days&quot;</span>, <span class="st">&quot;et0_mm&quot;</span>)]</span>
+<span id="cb6-3"><a href="#cb6-3" tabindex="-1"></a><span class="co">#&gt; &lt;rmet monthly&gt; 13 rows x 6 columns</span></span>
+<span id="cb6-4"><a href="#cb6-4" tabindex="-1"></a><span class="co">#&gt; Period: 2022-12-01 to 2023-12-01</span></span>
+<span id="cb6-5"><a href="#cb6-5" tabindex="-1"></a><span class="co">#&gt;         month n_days temp_mean_c precip_mm rain_days    et0_mm</span></span>
+<span id="cb6-6"><a href="#cb6-6" tabindex="-1"></a><span class="co">#&gt; 1  2022-12-01      1          NA        NA        NA        NA</span></span>
+<span id="cb6-7"><a href="#cb6-7" tabindex="-1"></a><span class="co">#&gt; 2  2023-01-01     31    26.10725      53.2         5 172.28004</span></span>
+<span id="cb6-8"><a href="#cb6-8" tabindex="-1"></a><span class="co">#&gt; 3  2023-02-01     28    24.73563     116.4         8 128.35298</span></span>
+<span id="cb6-9"><a href="#cb6-9" tabindex="-1"></a><span class="co">#&gt; 4  2023-03-01     31    25.46325      89.8         9 119.69306</span></span>
+<span id="cb6-10"><a href="#cb6-10" tabindex="-1"></a><span class="co">#&gt; 5  2023-04-01     30    20.59958      35.2         3  78.73280</span></span>
+<span id="cb6-11"><a href="#cb6-11" tabindex="-1"></a><span class="co">#&gt; 6  2023-05-01     31    18.35235      98.8         5  46.28680</span></span>
+<span id="cb6-12"><a href="#cb6-12" tabindex="-1"></a><span class="co">#&gt; 7  2023-06-01     30    16.29611     247.6         9  39.75671</span></span>
+<span id="cb6-13"><a href="#cb6-13" tabindex="-1"></a><span class="co">#&gt; 8  2023-07-01     31    15.46237     210.8         9  44.28155</span></span>
+<span id="cb6-14"><a href="#cb6-14" tabindex="-1"></a><span class="co">#&gt; 9  2023-08-01     31    16.69462      77.0         7  68.55122</span></span>
+<span id="cb6-15"><a href="#cb6-15" tabindex="-1"></a><span class="co">#&gt; 10 2023-09-01     30    18.31847     394.8        17  62.83033</span></span>
+<span id="cb6-16"><a href="#cb6-16" tabindex="-1"></a><span class="co">#&gt; ... with 3 more rows</span></span></code></pre></div>
+<p>Months are local calendar months, so the first month of a year of UTC
+data can contain a single day (here, the evening of 31 December). Such
+partial months are <code>NA</code> because of <code>min_days</code>.</p>
+<p>A simple water balance indicator, rainfall minus reference
+evapotranspiration, follows directly:</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a>monthly<span class="sc">$</span>balance_mm <span class="ot">&lt;-</span> monthly<span class="sc">$</span>precip_mm <span class="sc">-</span> monthly<span class="sc">$</span>et0_mm</span>
+<span id="cb7-2"><a href="#cb7-2" tabindex="-1"></a><span class="fu">round</span>(monthly<span class="sc">$</span>balance_mm, <span class="dv">1</span>)</span>
+<span id="cb7-3"><a href="#cb7-3" tabindex="-1"></a><span class="co">#&gt;  [1]     NA -119.1  -12.0  -29.9  -43.5   52.5  207.8  166.5    8.4  332.0</span></span>
+<span id="cb7-4"><a href="#cb7-4" tabindex="-1"></a><span class="co">#&gt; [11]   15.9  235.9  -58.7</span></span></code></pre></div>
+</div>
+<div id="potential-evapotranspiration-and-water-balance" class="section level2">
+<h2>4. Potential evapotranspiration and water balance</h2>
+<p>When only temperature is reliable,
+<code>inmet_et0(method = &quot;hargreaves&quot;)</code> needs no radiation, wind
+or humidity. For monthly data, <code>inmet_pet_thornthwaite()</code>
+gives the potential evapotranspiration, and
+<code>inmet_water_balance()</code> follows the soil water month after
+month (Thornthwaite and Mather):</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a>monthly <span class="ot">&lt;-</span> <span class="fu">inmet_pet_thornthwaite</span>(monthly)</span>
+<span id="cb8-2"><a href="#cb8-2" tabindex="-1"></a>balance <span class="ot">&lt;-</span> <span class="fu">inmet_water_balance</span>(monthly, <span class="at">awc =</span> <span class="dv">100</span>)</span>
+<span id="cb8-3"><a href="#cb8-3" tabindex="-1"></a><span class="fu">round</span>(balance[, <span class="fu">c</span>(<span class="st">&quot;precip_mm&quot;</span>, <span class="st">&quot;pet_mm&quot;</span>, <span class="st">&quot;storage_mm&quot;</span>, <span class="st">&quot;deficit_mm&quot;</span>, <span class="st">&quot;excess_mm&quot;</span>)][<span class="dv">2</span><span class="sc">:</span><span class="dv">13</span>, ], <span class="dv">1</span>)</span>
+<span id="cb8-4"><a href="#cb8-4" tabindex="-1"></a><span class="co">#&gt; &lt;rmet monthly&gt; 12 rows x 5 columns</span></span>
+<span id="cb8-5"><a href="#cb8-5" tabindex="-1"></a><span class="co">#&gt;    precip_mm pet_mm storage_mm deficit_mm excess_mm</span></span>
+<span id="cb8-6"><a href="#cb8-6" tabindex="-1"></a><span class="co">#&gt; 2       53.2  154.5       36.3       37.6       0.0</span></span>
+<span id="cb8-7"><a href="#cb8-7" tabindex="-1"></a><span class="co">#&gt; 3      116.4  117.2       36.0        0.5       0.0</span></span>
+<span id="cb8-8"><a href="#cb8-8" tabindex="-1"></a><span class="co">#&gt; 4       89.8  129.8       24.1       28.1       0.0</span></span>
+<span id="cb8-9"><a href="#cb8-9" tabindex="-1"></a><span class="co">#&gt; 5       35.2   71.6       16.8       29.0       0.0</span></span>
+<span id="cb8-10"><a href="#cb8-10" tabindex="-1"></a><span class="co">#&gt; 6       98.8   53.0       62.6        0.0       0.0</span></span>
+<span id="cb8-11"><a href="#cb8-11" tabindex="-1"></a><span class="co">#&gt; 7      247.6   37.7      100.0        0.0     172.5</span></span>
+<span id="cb8-12"><a href="#cb8-12" tabindex="-1"></a><span class="co">#&gt; 8      210.8   35.1      100.0        0.0     175.7</span></span>
+<span id="cb8-13"><a href="#cb8-13" tabindex="-1"></a><span class="co">#&gt; 9       77.0   44.6      100.0        0.0      32.4</span></span>
+<span id="cb8-14"><a href="#cb8-14" tabindex="-1"></a><span class="co">#&gt; 10     394.8   57.7      100.0        0.0     337.1</span></span>
+<span id="cb8-15"><a href="#cb8-15" tabindex="-1"></a><span class="co">#&gt; 11     110.0   69.7      100.0        0.0      40.3</span></span>
+<span id="cb8-16"><a href="#cb8-16" tabindex="-1"></a><span class="co">#&gt; ... with 2 more rows</span></span></code></pre></div>
+<p><code>awc</code> is the available water capacity of the soil, in mm.
+The first months depend on the initial storage (<code>initial</code>),
+so use a series that starts before the period of interest; a single
+year, as here, only illustrates the output.</p>
+</div>
+<div id="climate-indices" class="section level2">
+<h2>5. Climate indices</h2>
+<p><code>inmet_indices()</code> computes ETCCDI-style indices per
+station and year (or month) from the daily values: extremes, counts of
+hot days and frost days, growing degree days, total rainfall on wet days
+and the longest dry and wet spells. An index is <code>NA</code> when too
+many days are missing (<code>min_valid</code>):</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a>indices <span class="ot">&lt;-</span> <span class="fu">inmet_indices</span>(daily)</span>
+<span id="cb9-2"><a href="#cb9-2" tabindex="-1"></a><span class="fu">t</span>(indices[, <span class="fu">c</span>(<span class="st">&quot;txx&quot;</span>, <span class="st">&quot;tnn&quot;</span>, <span class="st">&quot;summer_days&quot;</span>, <span class="st">&quot;gdd&quot;</span>, <span class="st">&quot;prcptot&quot;</span>, <span class="st">&quot;rx1day&quot;</span>, <span class="st">&quot;cdd&quot;</span>, <span class="st">&quot;cwd&quot;</span>)])</span>
+<span id="cb9-3"><a href="#cb9-3" tabindex="-1"></a><span class="co">#&gt;             [,1]   [,2]</span></span>
+<span id="cb9-4"><a href="#cb9-4" tabindex="-1"></a><span class="co">#&gt; txx           NA   38.8</span></span>
+<span id="cb9-5"><a href="#cb9-5" tabindex="-1"></a><span class="co">#&gt; tnn           NA    3.9</span></span>
+<span id="cb9-6"><a href="#cb9-6" tabindex="-1"></a><span class="co">#&gt; summer_days   NA  210.0</span></span>
+<span id="cb9-7"><a href="#cb9-7" tabindex="-1"></a><span class="co">#&gt; gdd           NA 4091.6</span></span>
+<span id="cb9-8"><a href="#cb9-8" tabindex="-1"></a><span class="co">#&gt; prcptot       NA 1851.2</span></span>
+<span id="cb9-9"><a href="#cb9-9" tabindex="-1"></a><span class="co">#&gt; rx1day        NA   89.4</span></span>
+<span id="cb9-10"><a href="#cb9-10" tabindex="-1"></a><span class="co">#&gt; cdd           NA   19.0</span></span>
+<span id="cb9-11"><a href="#cb9-11" tabindex="-1"></a><span class="co">#&gt; cwd           NA    6.0</span></span></code></pre></div>
+<p>The first column is the evening of 31 December 2022 in local time,
+the start of the UTC year of the example data, which is too short to
+give any index.</p>
+<p>With 20 or more years of monthly data, <code>inmet_spi()</code> gives
+the Standardized Precipitation Index, and <code>inmet_normals()</code>
+and <code>inmet_anomaly()</code> the climatological normals and the
+anomalies relative to them.</p>
+</div>
+<div id="short-gaps" class="section level2">
+<h2>6. Short gaps</h2>
+<p><code>inmet_fill()</code> fills short gaps by linear interpolation
+and, if there are several years, with the typical value of the day of
+the year. Every filled value is marked, so the result can be traced back
+to measurements. Rainfall is never filled:</p>
+<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" tabindex="-1"></a>holes <span class="ot">&lt;-</span> hourly</span>
+<span id="cb10-2"><a href="#cb10-2" tabindex="-1"></a>holes<span class="sc">$</span>temp_dry_c[<span class="dv">100</span><span class="sc">:</span><span class="dv">102</span>] <span class="ot">&lt;-</span> <span class="cn">NA</span></span>
+<span id="cb10-3"><a href="#cb10-3" tabindex="-1"></a>filled <span class="ot">&lt;-</span> <span class="fu">inmet_fill</span>(holes, <span class="st">&quot;temp_dry_c&quot;</span>, <span class="at">method =</span> <span class="st">&quot;linear&quot;</span>)</span>
+<span id="cb10-4"><a href="#cb10-4" tabindex="-1"></a><span class="fu">table</span>(filled<span class="sc">$</span>temp_dry_c_filled, <span class="at">useNA =</span> <span class="st">&quot;ifany&quot;</span>)</span>
+<span id="cb10-5"><a href="#cb10-5" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb10-6"><a href="#cb10-6" tabindex="-1"></a><span class="co">#&gt; linear   &lt;NA&gt; </span></span>
+<span id="cb10-7"><a href="#cb10-7" tabindex="-1"></a><span class="co">#&gt;      3   8660</span></span></code></pre></div>
+</div>
+<div id="stations-and-locations" class="section level2">
+<h2>7. Stations and locations</h2>
+<p><code>inmet_nearest()</code> accepts many locations at once,
+<code>inmet_stations_within()</code> selects the stations inside a box
+or polygon, and <code>inmet_interpolate()</code> estimates a variable at
+other places from the stations by inverse-distance weighting:</p>
+<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" tabindex="-1"></a><span class="fu">inmet_nearest</span>(<span class="fu">c</span>(<span class="sc">-</span><span class="fl">30.03</span>, <span class="sc">-</span><span class="fl">23.55</span>), <span class="fu">c</span>(<span class="sc">-</span><span class="fl">51.23</span>, <span class="sc">-</span><span class="fl">46.63</span>), <span class="at">n =</span> <span class="dv">2</span>, <span class="at">source =</span> <span class="st">&quot;bundled&quot;</span>)[</span>
+<span id="cb11-2"><a href="#cb11-2" tabindex="-1"></a>  , <span class="fu">c</span>(<span class="st">&quot;location&quot;</span>, <span class="st">&quot;rank&quot;</span>, <span class="st">&quot;station_code&quot;</span>, <span class="st">&quot;station_name&quot;</span>, <span class="st">&quot;distance_km&quot;</span>)]</span>
+<span id="cb11-3"><a href="#cb11-3" tabindex="-1"></a><span class="co">#&gt;   location rank station_code                   station_name distance_km</span></span>
+<span id="cb11-4"><a href="#cb11-4" tabindex="-1"></a><span class="co">#&gt; 1        1    1         A801 PORTO ALEGRE - JARDIM BOTANICO    5.933358</span></span>
+<span id="cb11-5"><a href="#cb11-5" tabindex="-1"></a><span class="co">#&gt; 2        1    2         B808                   CACHOEIRINHA   13.427377</span></span>
+<span id="cb11-6"><a href="#cb11-6" tabindex="-1"></a><span class="co">#&gt; 3        2    1         A701            SAO PAULO - MIRANTE    6.057680</span></span>
+<span id="cb11-7"><a href="#cb11-7" tabindex="-1"></a><span class="co">#&gt; 4        2    2         A771         SAO PAULO - INTERLAGOS   19.991750</span></span></code></pre></div>
+</div>
+<div id="finding-stations-with-data" class="section level2">
+<h2>8. Finding stations with data</h2>
+<p>Before downloading and reading, <code>inmet_availability()</code>
+lists the stations and periods in archives that are already in the
+cache, using only the file names:</p>
+<div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" tabindex="-1"></a><span class="fu">inmet_availability</span>(<span class="at">dest_dir =</span> <span class="fu">file.path</span>(<span class="fu">tempdir</span>(), <span class="st">&quot;rmet-vignette-cache&quot;</span>))</span>
+<span id="cb12-2"><a href="#cb12-2" tabindex="-1"></a><span class="co">#&gt; [1] station_code state        year         start        end         </span></span>
+<span id="cb12-3"><a href="#cb12-3" tabindex="-1"></a><span class="co">#&gt; [6] n_files     </span></span>
+<span id="cb12-4"><a href="#cb12-4" tabindex="-1"></a><span class="co">#&gt; &lt;0 linhas&gt; (ou row.names de comprimento 0)</span></span></code></pre></div>
+<p>With a populated cache it has one row per station and year. To keep
+the cache somewhere else for a whole session, set
+<code>options(rmet.cache_dir = &quot;path&quot;)</code> or the environment
+variable <code>RMET_CACHE_DIR</code>; <code>inmet_cache_dir()</code>
+shows the directory in use.</p>
+</div>
+
+
+
+<!-- code folding -->
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

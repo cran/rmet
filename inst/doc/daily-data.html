@@ -428,11 +428,13 @@ when it has at least <code>min_hours</code> valid hourly values that day
 <span id="cb7-4"><a href="#cb7-4" tabindex="-1"></a><span class="co">#&gt;  (0,12] (12,19] (19,23] (23,25] </span></span>
 <span id="cb7-5"><a href="#cb7-5" tabindex="-1"></a><span class="co">#&gt;       2       2      46     316</span></span>
 <span id="cb7-6"><a href="#cb7-6" tabindex="-1"></a>daily[daily<span class="sc">$</span>n_hours <span class="sc">&lt;</span> <span class="dv">20</span>, <span class="fu">c</span>(<span class="st">&quot;date&quot;</span>, <span class="st">&quot;n_hours&quot;</span>, <span class="st">&quot;temp_max_c&quot;</span>, <span class="st">&quot;precip_mm&quot;</span>)]</span>
-<span id="cb7-7"><a href="#cb7-7" tabindex="-1"></a><span class="co">#&gt;           date n_hours temp_max_c precip_mm</span></span>
-<span id="cb7-8"><a href="#cb7-8" tabindex="-1"></a><span class="co">#&gt; 1   2022-12-31       4         NA        NA</span></span>
-<span id="cb7-9"><a href="#cb7-9" tabindex="-1"></a><span class="co">#&gt; 124 2023-05-03      17         NA        NA</span></span>
-<span id="cb7-10"><a href="#cb7-10" tabindex="-1"></a><span class="co">#&gt; 148 2023-05-27       1         NA        NA</span></span>
-<span id="cb7-11"><a href="#cb7-11" tabindex="-1"></a><span class="co">#&gt; 149 2023-05-28      13         NA        NA</span></span></code></pre></div>
+<span id="cb7-7"><a href="#cb7-7" tabindex="-1"></a><span class="co">#&gt; &lt;rmet daily&gt; 4 rows x 4 columns</span></span>
+<span id="cb7-8"><a href="#cb7-8" tabindex="-1"></a><span class="co">#&gt; Period: 2022-12-31 to 2023-05-28</span></span>
+<span id="cb7-9"><a href="#cb7-9" tabindex="-1"></a><span class="co">#&gt;           date n_hours temp_max_c precip_mm</span></span>
+<span id="cb7-10"><a href="#cb7-10" tabindex="-1"></a><span class="co">#&gt; 1   2022-12-31       4         NA        NA</span></span>
+<span id="cb7-11"><a href="#cb7-11" tabindex="-1"></a><span class="co">#&gt; 124 2023-05-03      17         NA        NA</span></span>
+<span id="cb7-12"><a href="#cb7-12" tabindex="-1"></a><span class="co">#&gt; 148 2023-05-27       1         NA        NA</span></span>
+<span id="cb7-13"><a href="#cb7-13" tabindex="-1"></a><span class="co">#&gt; 149 2023-05-28      13         NA        NA</span></span></code></pre></div>
 <p>To see completeness before computing anything,
 <code>inmet_completeness()</code> gives the percentage of valid hours
 per station and month (or year):</p>
@@ -493,12 +495,15 @@ like, plant a sensor spike of 15 degC in one hour:</p>
 <span id="cb11-2"><a href="#cb11-2" tabindex="-1"></a>y<span class="sc">$</span>temp_dry_c[<span class="dv">1000</span>] <span class="ot">&lt;-</span> y<span class="sc">$</span>temp_dry_c[<span class="dv">1000</span>] <span class="sc">+</span> <span class="dv">15</span></span>
 <span id="cb11-3"><a href="#cb11-3" tabindex="-1"></a>flagged <span class="ot">&lt;-</span> <span class="fu">inmet_qc</span>(y, <span class="at">quiet =</span> <span class="cn">TRUE</span>)</span>
 <span id="cb11-4"><a href="#cb11-4" tabindex="-1"></a>flagged[<span class="dv">998</span><span class="sc">:</span><span class="dv">1002</span>, <span class="fu">c</span>(<span class="st">&quot;datetime&quot;</span>, <span class="st">&quot;temp_dry_c&quot;</span>, <span class="st">&quot;temp_max_prev_c&quot;</span>, <span class="st">&quot;temp_dry_c_flag&quot;</span>)]</span>
-<span id="cb11-5"><a href="#cb11-5" tabindex="-1"></a><span class="co">#&gt;                 datetime temp_dry_c temp_max_prev_c   temp_dry_c_flag</span></span>
-<span id="cb11-6"><a href="#cb11-6" tabindex="-1"></a><span class="co">#&gt; 998  2023-02-12 02:00:00       24.2            24.6              &lt;NA&gt;</span></span>
-<span id="cb11-7"><a href="#cb11-7" tabindex="-1"></a><span class="co">#&gt; 999  2023-02-12 03:00:00       23.6            24.3              &lt;NA&gt;</span></span>
-<span id="cb11-8"><a href="#cb11-8" tabindex="-1"></a><span class="co">#&gt; 1000 2023-02-12 04:00:00       38.4            23.8 consistency,spike</span></span>
-<span id="cb11-9"><a href="#cb11-9" tabindex="-1"></a><span class="co">#&gt; 1001 2023-02-12 05:00:00       22.7            23.5              &lt;NA&gt;</span></span>
-<span id="cb11-10"><a href="#cb11-10" tabindex="-1"></a><span class="co">#&gt; 1002 2023-02-12 06:00:00       21.9            22.6              &lt;NA&gt;</span></span></code></pre></div>
+<span id="cb11-5"><a href="#cb11-5" tabindex="-1"></a><span class="co">#&gt; &lt;rmet hourly&gt; 5 rows x 4 columns</span></span>
+<span id="cb11-6"><a href="#cb11-6" tabindex="-1"></a><span class="co">#&gt; Period: 2023-02-12 02:00:00 to 2023-02-12 06:00:00 (UTC)</span></span>
+<span id="cb11-7"><a href="#cb11-7" tabindex="-1"></a><span class="co">#&gt; Quality control: 1 flag column(s)</span></span>
+<span id="cb11-8"><a href="#cb11-8" tabindex="-1"></a><span class="co">#&gt;                 datetime temp_dry_c temp_max_prev_c   temp_dry_c_flag</span></span>
+<span id="cb11-9"><a href="#cb11-9" tabindex="-1"></a><span class="co">#&gt; 998  2023-02-12 02:00:00       24.2            24.6              &lt;NA&gt;</span></span>
+<span id="cb11-10"><a href="#cb11-10" tabindex="-1"></a><span class="co">#&gt; 999  2023-02-12 03:00:00       23.6            24.3              &lt;NA&gt;</span></span>
+<span id="cb11-11"><a href="#cb11-11" tabindex="-1"></a><span class="co">#&gt; 1000 2023-02-12 04:00:00       38.4            23.8 consistency,spike</span></span>
+<span id="cb11-12"><a href="#cb11-12" tabindex="-1"></a><span class="co">#&gt; 1001 2023-02-12 05:00:00       22.7            23.5              &lt;NA&gt;</span></span>
+<span id="cb11-13"><a href="#cb11-13" tabindex="-1"></a><span class="co">#&gt; 1002 2023-02-12 06:00:00       21.9            22.6              &lt;NA&gt;</span></span></code></pre></div>
 <p>The reading is both a spike and inconsistent with the hour’s maximum.
 <code>inmet_daily(flagged)</code> leaves it out of the daily statistics,
 and <code>attr(flagged, &quot;qc_summary&quot;)</code> counts the flags per
